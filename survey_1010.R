@@ -15,6 +15,7 @@ library(MASS)
 # }
 # nleqslv(c(1,1), fn)
 
+####シュミレーション設定####
 rm(list = ls(all.names = TRUE))
 
 # シミュレーションの繰り返し数
@@ -79,13 +80,13 @@ for(i in 1:n){
 tau0 <- mean(YY1)-mean(YY0)
 
 # Error-prone covatiatesの設定
-## Errorの分散の設定
-sigma_e <- 1
-ee <- rnorm(n,sd=sigma_e)
+# Errorの分散の設定
+# sigma_e <- 1 
+# ee <- rnorm(n,sd=sigma_e)
 
-XX[,1] <- XX[,1]+ee
+# XX[,1] <- XX[,1]+ee
 
-# 傾向スコア測定のためのロジスティック回帰モデル
+####傾向スコア測定のためのロジスティック回帰モデル####
 ps_fit <- glm(TT~XX, family=binomial)$fit
 
 
@@ -110,8 +111,7 @@ y_logit <- glm(YY~XX,family = binomial)$fit
 # }
 # beta <- nleqslv(c(1,1), fn)$x
 
-#--------------------------------------------------------------------------
-# ロジスティック回帰をnleqslvで実行　テスト
+####ロジスティック回帰をnleqslvで実行　テスト####
 fn <- function(beta){
   lp <- exp(XX%*%beta)
   pi <- lp/(1+lp)
@@ -121,8 +121,7 @@ beta_hat <- nleqslv(c(1,1), fn)$x
 lp <- exp(XX%*%beta_hat)
 pi <- lp/(1+lp)
 
-#--------------------------------------------------------------------
-#提案手法
+####提案手法####
 
 ps_fit <- glm(TT~XX, family=binomial)$fit
 
@@ -185,8 +184,7 @@ phi_hat <- theta_hat[3]
 # tau
 # tau0
 
-# ---------------------------------------------------------------
-#　gammaの推定
+####gammaの推定####
 #ver1 (need bbmle)
 minus.log.lik <- function(gamma){
   or_ml <- XX%*%beta_hat + TT
@@ -238,8 +236,7 @@ tau0
 
 
 
-# --------------------------------------------------------------
-# 通常のDR推定値
+####通常のDR推定値####
 
 # y1_logit<- glm(data1.YY~data1.XX,family = binomial)$fit
 # y0_logit<- glm(data0.YY~data0.XX,family = binomial)$fit
