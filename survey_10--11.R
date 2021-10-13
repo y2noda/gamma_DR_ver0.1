@@ -187,11 +187,13 @@ ConstFunc = function(x) {
   lp <- exp((gamma+1)*(or_ml))
   lq <- exp(YY*(gamma+1)*(or_ml))
   pi <- lp/(1+lp)
-  g <- (lq/(1+lp))^(gamma/(1+gamma)) * omega
-  return(c(t(g*(YY-pi))%*%rep(1,1000), t(g*(YY-pi))%*%TT, t(g*(YY-pi))%*%XX))
+  g <- (lq/(1+lp))^(gamma/(1+gamma)) 
+  
+  h <- t(omega * (YY-pi)) %*% TT
+  return(c(t(g*(YY-pi))%*%rep(1,1000), t(g*(YY-pi))%*%TT, t(g*(YY-pi))%*%XX, h))
 }
 
-eq.value <- rep(0,4)
+eq.value <- rep(0,5)
 
 x0 <- rep(1, 1004)
 
@@ -203,3 +205,11 @@ theta_t_hat <- pars[2]
 theta_x_hat <- pars[3:4]
 omega_hat <- pars[5:1004]
 
+beta_hat <- pars[1:4]
+lm1 <- exp(beta_hat[1] + TT*beta_hat[2] + XX%*%beta_hat[3:4])
+psy1 <- lm1/(lm1+1)
+lm2 <- exp(beta_hat[1] + XX%*%beta_hat[3:4])
+psy2 <- lm2/(lm2+1)
+
+tau <- mean(psy1)-mean(psy2)
+tau #0.0518
