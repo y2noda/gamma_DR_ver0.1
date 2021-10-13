@@ -42,7 +42,7 @@ T_lm <- 0.2+XX[,1]+XX[,2]
 p_T <- exp(T_lm)/(1+exp(T_lm))
 
 # Potential outcomesの分布の設定
-## アウトカムの回帰パラメータの設定
+# アウトカムの回帰パラメータの設定
 Y_lm1 <- 0.2+1+XX[,1]+XX[,2]; Y_lm0 <- 0.2+XX[,1]+XX[,2]
 p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
 
@@ -86,9 +86,9 @@ tau0 <- mean(YY1)-mean(YY0)
 
 # XX[,1] <- XX[,1]+ee
 
+####work 8月ぐらい####
 ####傾向スコア測定のためのロジスティック回帰モデル####
 ps_fit <- glm(TT~XX, family=binomial)$fit
-
 
 y_logit <- glm(YY~XX,family = binomial)$fit
 
@@ -217,7 +217,7 @@ gamma_hat <- optimise(gamma_fn,c(0,10))$minimum
 # }
 # gamma_hat <- optimise(gamma_fn,c(0,10))$minimum
 
-#---------------------------------------------------------------
+####因果効果の推定####
 theta_hat <- estimate_pra_fn(gamma_hat)
 
 beta_hat <- theta_hat[1:2]
@@ -232,17 +232,51 @@ tau <- mean(psy1)-mean(psy2)
 tau
 tau0
 
-
-
-
-
 ####通常のDR推定値####
+ps_fit <- glm(TT~XX, family=binomial)$fit
 
-# y1_logit<- glm(data1.YY~data1.XX,family = binomial)$fit
-# y0_logit<- glm(data0.YY~data0.XX,family = binomial)$fit
-# 
-# dre1 <- (1/1000)*sum(YY+((TT-ps_fit)/ps_fit)*(YY-y1_logit))
-# dre0 <- (1/1000)*sum(((1-TT)*YY)/(1-ps_fit)+(1-(1-TT)/(1-ps_fit))*y0_logit)
-# 
-# tau_dr <- dre1 - dre0
+data1.YY <- YY[TT==1]
+data0.YY <- YY[TT==0]
+data1.XX <- XX[TT==1,]
+data0.XX <- XX[TT==0,]
+y1_logit<- glm(data1.YY~data1.XX,family = binomial)$fit
+y0_logit<- glm(data0.YY~data0.XX,family = binomial)$fit
+
+dre1 <- (1/1000)*sum(YY+((TT-ps_fit)/ps_fit)*(YY-y1_logit))
+dre0 <- (1/1000)*sum(((1-TT)*YY)/(1-ps_fit)+(1-(1-TT)/(1-ps_fit))*y0_logit)
+
+tau_dr <- dre1 - dre0
+# 0.18 tau=0.171
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
