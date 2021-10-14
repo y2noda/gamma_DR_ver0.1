@@ -178,19 +178,20 @@ ObjFunc = function(x) {
 }
 
 ConstFunc = function(x) {
-  theta_0 <- x[1]
-  theta_t <- x[2]
-  theta_x <- x[3:4]
+  beta_0 <- x[1]
+  beta_t <- x[2]
+  beta_x <- x[3:4]
   omega <- x[5:1004]
   
-  or_ml <- theta_0 + TT*theta_t + XX%*%theta_x
+  or_ml <- beta_0 + TT*beta_t + XX%*%beta_x
   lp <- exp((gamma+1)*(or_ml))
   lq <- exp(YY*(gamma+1)*(or_ml))
   pi <- lp/(1+lp)
   g <- (lq/(1+lp))^(gamma/(1+gamma)) 
   
-  h <- t(omega * (YY-pi)) %*% TT
-  return(c(t(g*(YY-pi))%*%rep(1,1000), t(g*(YY-pi))%*%TT, t(g*(YY-pi))%*%XX, h))
+  h <- t(omega * (YY-mean(pi))) %*% TT
+  
+  return(c(t(omega*g*(YY-pi))%*%rep(1,1000), t(omega*g*(YY-pi))%*%TT, t(omega*g*(YY-pi))%*%XX, h))
 }
 
 eq.value <- rep(0,5)
@@ -200,12 +201,9 @@ x0 <- rep(1, 1004)
 solution <- solnp(x0, fun = ObjFunc, eqfun = ConstFunc, eqB = eq.value)
 
 pars <- solution$pars
-theta_0_hat <- pars[1]
-theta_t_hat <- pars[2]
-theta_x_hat <- pars[3:4]
 omega_hat <- pars[5:1004]
-
 beta_hat <- pars[1:4]
+
 lm1 <- exp(beta_hat[1] + TT*beta_hat[2] + XX%*%beta_hat[3:4])
 psy1 <- lm1/(lm1+1)
 lm2 <- exp(beta_hat[1] + XX%*%beta_hat[3:4])
