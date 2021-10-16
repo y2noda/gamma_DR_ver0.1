@@ -50,9 +50,9 @@ p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
 
 
 # Misclassified outcomesの割合の設定
-pp11 <- 0.7; pp10 <- 0.3
+# pp11 <- 0.7; pp10 <- 0.3
 # pp11 <- 0.8; pp10 <- 0.2
-# pp11 <- 1.0; pp10 <- 0.0
+pp11 <- 1.0; pp10 <- 0.0
 
 
 TT <- YY1 <- YY0 <- YY <- Mis_p <- rep(0,n);
@@ -135,7 +135,8 @@ tau #0.21
 
 #　参考2
 TT_XX <- cbind(TT,XX)
-coef <- glm(YY~TT_XX, family = binomial)$coef
+
+coef <- glm(YY~TT + XX[,1] + XX[,2], family = binomial)$coef
 
 beta_hat <- coef[2:4]
 lm1 <- exp(TT*beta_hat[1] + XX%*%beta_hat[2:3] + coef[1])
@@ -147,7 +148,7 @@ tau <- mean(psy1)-mean(psy2)
 tau #0.0518
 
 
-yy_fit <- glm(YY~TT_XX, family = binomial)$fit
+yy_fit <- glm(YY~TT + XX[,1] + XX[,2], family = binomial)$fit
 yy_1 <- yy_fit[TT==1]
 yy_0 <- yy_fit[TT==0]
     
