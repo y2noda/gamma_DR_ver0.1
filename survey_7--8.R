@@ -218,14 +218,16 @@ gamma_hat <- optimise(gamma_fn,c(0,10))$minimum
 # gamma_hat <- optimise(gamma_fn,c(0,10))$minimum
 
 ####因果効果の推定####
-theta_hat <- estimate_pra_fn(gamma_hat)
+theta_hat <- estimate_pra_fn(gamma)
 
 beta_hat <- theta_hat[1:2]
 phi_hat <- theta_hat[3]
 
 lm1 <- exp(XX%*%beta_hat + TT + phi_hat/ps_fit)
+lm1 <- lm1[TT==1]
 psy1 <- lm1/(lm1+1)
 lm2 <- exp(XX%*%beta_hat + phi_hat/-(1-ps_fit))
+lm2 <- lm2[TT==0]
 psy2 <- lm2/(lm2+1)
 
 tau <- mean(psy1)-mean(psy2)
