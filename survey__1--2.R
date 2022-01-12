@@ -22,7 +22,6 @@ Sigma <- matrix(c(1,rho,rho,rho,
 
 XX <- mvrnorm(n, mu, Sigma)
 
-
 # 処置の分布の設定,生成
 T_lm <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]
 p_T <- exp(T_lm)/(1+exp(T_lm))
@@ -36,7 +35,7 @@ betax <- 0.2+TT+XX[,1]+XX[,2]
 
 # 誤判別確率の生成
 ## アウトカムに誤判別が含まれる割合
-mp <- 0.1
+mp <- 0.01
 mp_size <- n * mp
 
 ## 誤判別のアウトカムのインデックス
@@ -106,23 +105,41 @@ estimate_pra_fn <- function(gamma){
   return(beta_hat <- nleqslv(c(0,0,0,0), fn, method = "Newton")$x)
 }
 
-gamma <- 0.5
+gamma <- 0.1
 beta_hat <- estimate_pra_fn(gamma)
 
-lm1 <- exp(beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4])
-lm1 <- lm1[TT==1]
-psy1 <- lm1/(lm1+1)
-lm2 <- exp(beta_hat[1] + ZZ%*%beta_hat[3:4])
-lm2 <- lm2[TT==0]
-psy2 <- lm2/(lm2+1)
-
-tau <- mean(psy1)-mean(psy2)
 beta_t <- beta_hat[2]
 
-#  glm(YY~TT+XX[,1:2], family = binomial)
-#0.3463       0.6481       0.9504       0.9646 
+# lm <- exp(beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4])
+# psy <- lm/(lm+1)
+# tau <- mean(psy[TT==1])-mean(psy[TT==0])
+
+
+# ガンマの選択について’
+
+gamma_fn1 <- function(gamma){
+  or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
+  lp <- exp(or_ml)
+  pi <- lp/(1+lp)
+  return(-sum(pi^(gamma+1)+(1-pi)^(gamma+1))^(1/(gamma+1)))
+}
+gamma_hat <- optimise(gamma_fn1,c(0,10))$minimum
+
+
+gamma_fn2 <- function(gamma){
+  or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
+  lp <- exp(or_ml)
+  pi <- lp/(1+lp)
+  return(-prod(pi^(YY)*(1-pi)^(1-YY)))
+}
+gamma_hat <- optimise(gamma_fn2,c(0,10))$minimum
+
+
+
+
+#  glmでgamma=0のときと一致するかの確認
+##0.3678035 0.5080564 0.2977938 0.3353576
 
 w <- ifelse(TT==1, 1/ps_fit, 1/(1-ps_fit))
-wY <- w*YY
-glm(wY~TT+XX[,1:2], family = binomial)
+result <- glm(YY~TT+XX[,1:2], family = binomial, weights = w)
 
