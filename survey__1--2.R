@@ -85,7 +85,9 @@ ZZ <- XX[,1:2]
 ZZ_tilde <- XX[,3:4]
 
 ####アウトカム回帰のみのモデル####
-fn <- function(beta){
+
+# 推定方程式
+estimate_eq <- function(beta){
   beta_0 <- beta[1]
   beta_t <- beta[2]
   beta_z <- beta[3:4]
@@ -102,37 +104,104 @@ fn <- function(beta){
 
 # パラメータ推定 c(0,1,1,1)
 estimate_pra_fn <- function(gamma){
-  return(beta_hat <- nleqslv(c(0,0,0,0), fn, method = "Newton")$x)
+  gamma <<- gamma
+  beta_hat <- nleqslv(c(0,0,0,0), estimate_eq, method = "Newton")$x
+  
+  return(list(beta_hat=beta_hat, gamma=gamma))
 }
+
+
+## 重みのプロット
+plot_fn <- function(beta,gamma,type="density"){
+  beta_0 <- beta[1]
+  beta_t <- beta[2]
+  beta_z <- beta[3:4]
+  
+  or_ml <- beta_0 + TT*beta_t + ZZ%*%beta_z
+  lp <- exp((gamma+1)*(or_ml))
+  lq <- exp(YY*(gamma+1)*(or_ml))
+  pi <- lp/(1+lp)
+  g <- (lq/(1+lp))^(gamma/(1+gamma))
+  
+  if(type == "density"){
+    plot(density(g))
+  }else if(type == "hist"){
+    hist(g)
+  }else{
+    print("error")
+  }
+}
+
+
+## 結果
 
 gamma <- 0.1
-beta_hat <- estimate_pra_fn(gamma)
-
-beta_t <- beta_hat[2]
-
-# lm <- exp(beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4])
-# psy <- lm/(lm+1)
-# tau <- mean(psy[TT==1])-mean(psy[TT==0])
+beta_hat <- estimate_pra_fn(gamma)$beta_hat
+print(beta_hat)
+plot_fn(beta_hat, gamma, type = "density")
 
 
-# ガンマの選択について’
+
+# gamma <- 1
+# beta_hat <- estimate_pra_fn(gamma)
+# 
+# beta_t <- beta_hat[2]
+
+
+# ガンマの選択について
+gamma_0 <- 0.1
+gamma <- 0.1
 
 gamma_fn1 <- function(gamma){
+  beta_hat <- estimate_pra_fn(gamma)$beta_hat
+  
   or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
   lp <- exp(or_ml)
   pi <- lp/(1+lp)
-  return(-sum(pi^(gamma+1)+(1-pi)^(gamma+1))^(1/(gamma+1)))
+  return(-sum(pi^(gamma_0+1)+(1-pi)^(gamma_0+1))^(1/(gamma_0+1)))
 }
-gamma_hat <- optimise(gamma_fn1,c(0,10))$minimum
+
+gamma_hat <- optimise(gamma_fn1,c(0,2.5))$minimum
+
+## plot
+curve(Vectorize(gamma_fn1)(x), 0, 10)
+# plot(gamma_fn1, 0, 10)
 
 
-gamma_fn2 <- function(gamma){
-  or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
-  lp <- exp(or_ml)
-  pi <- lp/(1+lp)
-  return(-prod(pi^(YY)*(1-pi)^(1-YY)))
+# gamma_fn2 <- function(gamma){
+#   
+#   gamma <<- gamma
+#   beta_hat <- estimate_pra_fn(gamma)
+#   
+#   or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
+#   lp <- exp(or_ml)
+#   pi <- lp/(1+lp)
+#   return(-prod(pi^(YY)*(1-pi)^(1-YY)))
+# }
+# 
+# gamma_hat <- optimise(gamma_fn2,c(0,2.5))$minimum
+
+
+# 新たなガンマによる推定結果
+
+beta_hat_gamma_hat <- estimate_pra_fn(gamma_hat)
+
+
+# まとめた推定
+
+## 最適化のための関数にパラメータを入れられない
+
+gamma_0 <- 0.1
+estimate_fn <- function(gamma_0){
+  gamma_0 <<- gamma_0
+  gamma_hat <- optimise(gamma_fn1,c(0,2.5))$minimum
+  
+  beta_hat_gamma <- estimate_pra_fn(gamma_hat)$beta_hat
+  
+  return(list(beta_hat_gamma=beta_hat_gamma, gamma_hat=gamma_hat))
 }
-gamma_hat <- optimise(gamma_fn2,c(0,10))$minimum
+
+
 
 
 
