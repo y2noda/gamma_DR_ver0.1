@@ -8,7 +8,10 @@ library(nleqslv)
 rm(list = ls(all.names = TRUE))
 
 # サンプルサイズ
-n = 1000
+n = 200
+
+# シミュレーションの繰り返し数
+kk_T <- 1000
 
 # 共変量の分布の設定、乱数の発生
 mu <- c(0,0,0,0)
@@ -34,8 +37,9 @@ for (i in 1:n) {
 betax <- 0.2+TT+XX[,1]+XX[,2]
 
 # 誤判別確率の生成
+
 ## アウトカムに誤判別が含まれる割合
-mp <- 0.01
+mp <- 0.12
 mp_size <- n * mp
 
 ## 誤判別のアウトカムのインデックス
@@ -99,10 +103,10 @@ estimate_eq <- function(beta){
   g <- (lq/(1+lp))^(gamma/(1+gamma))
   w <- ifelse(TT==1, 1/ps_fit, 1/(1-ps_fit))
   
-  return(c(t(w*g*(YY-pi))%*%rep(1,1000), t(w*g*(YY-pi))%*%TT, t(w*g*(YY-pi))%*%ZZ))
+  return(c(t(w*g*(YY-pi))%*%rep(1,n), t(w*g*(YY-pi))%*%TT, t(w*g*(YY-pi))%*%ZZ))
 }
 
-# パラメータ推定 c(0,1,1,1)
+# パラメータ推定 初期値：c(0,0,0,0)
 estimate_pra_fn <- function(gamma){
   gamma <<- gamma
   beta_hat <- nleqslv(c(0,0,0,0), estimate_eq, method = "Newton")$x
@@ -132,10 +136,9 @@ plot_fn <- function(beta,gamma,type="density"){
   }
 }
 
-
 ## 結果
 
-gamma <- 0.1
+gamma <- 0
 beta_hat <- estimate_pra_fn(gamma)$beta_hat
 print(beta_hat)
 plot_fn(beta_hat, gamma, type = "density")
@@ -161,7 +164,7 @@ gamma_fn1 <- function(gamma){
   return(-sum(pi^(gamma_0+1)+(1-pi)^(gamma_0+1))^(1/(gamma_0+1)))
 }
 
-gamma_hat <- optimise(gamma_fn1,c(0,2.5))$minimum
+gamma_hat <- optimise(gamma_fn1,c(0,10))$minimum
 
 ## plot
 curve(Vectorize(gamma_fn1)(x), 0, 10)
@@ -202,9 +205,66 @@ estimate_fn <- function(gamma_0){
 }
 
 
+# シュミレーション開始
+pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
+
+results.beta_t <- NULL
+beta_t_list <- NULL
+
+for (i in 1:kk_T) {
+  setTxtProgressBar(pb,i)
+  
+  
+  #　誤判別を含むアウトカムデータの生成
+  ## Misclassified outcomesの割合の設定
+  
+  YY1 <- YY0 <- YY <- rep(0,n);
+  for(i in 1:n){
+    # potential outcomesの乱数の発生
+    YY1[i] <- rbinom(1,size=1,prob=p_Y1[i])
+    YY0[i] <- rbinom(1,size=1,prob=p_Y0[i])
+  
+    # 観測されるoutcome
+    YY[i] <- TT[i]*YY1[i]+(1-TT[i])*YY0[i]
+    
+    # Misclassified outcomesの設定
+    if(i %in% mp_id){
+      if(YY[i]==1) {
+        YY[i] <-  0
+      }else if(YY[i]==0){
+        YY[i] <- 1
+      }
+    }
+  }
+
+gamma <- 0.5
+
+beta_hat <- estimate_pra_fn(gamma)$beta_hat
+# print(beta_hat)
+# plot_fn(beta_hat, gamma, type = "density")
+
+beta_t <- beta_hat[2]
+
+results.beta_t <- append(results.beta_t, beta_t)
+}
+
+results.beta_t %>% summary()
+boxplot(results.beta_t)
+
+## アウトプット
+export_data <- data.frame(results.beta_t)
+write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma0-5.csv")
+write_csv2(export_data %>% summary() %>% data.frame(), file = "~/Projects/gamma_DR_ver0.1/results/gamma0-5summary.csv")
 
 
 
+
+lm1 <- exp(beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4])
+psy1 <- lm1/(lm1+1)
+lm2 <- exp(beta_hat[1] + ZZ%*%beta_hat[3:4])
+psy2 <- lm2/(lm2+1)
+
+tau <- mean(psy1)-mean(psy2)
 
 #  glmでgamma=0のときと一致するかの確認
 ##0.3678035 0.5080564 0.2977938 0.3353576
