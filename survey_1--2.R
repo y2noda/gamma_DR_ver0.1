@@ -140,37 +140,61 @@ plot_fn(beta_hat, gamma, type = "hist")
 
 
 # ガンマの選択について
-gamma_0 <- 0.1
-gamma <- 0.1
-
-gamma_fn1 <- function(gamma){
-  beta_hat <- estimate_pra_fn(gamma)$beta_hat
-  
-  or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
-  lp <- exp(or_ml)
-  pi <- lp/(1+lp)
-  return(-sum(pi^(gamma_0+1)+(1-pi)^(gamma_0+1))^(1/(gamma_0+1)))
-}
-
-gamma_hat <- optimise(gamma_fn1,c(0,10))$minimum
-
-## plot
-curve(Vectorize(gamma_fn1)(x), 0, 10)
-# plot(gamma_fn1, 0, 10)
-
-
-# gamma_fn2 <- function(gamma){
-#   
-#   gamma <<- gamma
-#   beta_hat <- estimate_pra_fn(gamma)
+# gamma_0 <- 0.1
+# gamma <- 0.1
+# 
+# gamma_fn1 <- function(gamma){
+#   beta_hat <- estimate_pra_fn(gamma)$beta_hat
 #   
 #   or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
 #   lp <- exp(or_ml)
 #   pi <- lp/(1+lp)
-#   return(-prod(pi^(YY)*(1-pi)^(1-YY)))
+#   return(-sum(pi^(gamma_0+1)+(1-pi)^(gamma_0+1))^(1/(gamma_0+1)))
 # }
 # 
-# gamma_hat <- optimise(gamma_fn2,c(0,2.5))$minimum
+# gamma_hat <- optimise(gamma_fn1,c(0,10))$minimum
+# 
+# ## plot
+# curve(Vectorize(gamma_fn1)(x), 0, 10)
+# # plot(gamma_fn1, 0, 10)
+
+
+## Sugasawa2021
+DD <- function(expr, name, order = 1) {
+  if(order < 1) stop("'order' must be >= 1")
+  if(order == 1) D(expr, name)
+  else DD(D(expr, name), name, order - 1)
+}
+
+f <- expression(pi^y + (1-pi)^(1-y))
+DD(f, "y", 1)   
+
+gamma_fn2 <- function(gamma){
+  
+  
+  beta_hat <- estimate_pra_fn(gamma)$beta_hat
+
+  or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
+  lp <- exp(or_ml)
+  pi <- lp/(1+lp)
+  
+  C_gamma <- {pi^(1+gamma) + (1-pi)^(1+gamma)}^(gamma/(gamma+1))
+  
+  f <- pi^YY + (1-pi)^(1-YY)
+  f_1 <- pi^YY * log(pi) - (1 - pi)^(1 - YY) * log((1 - pi))
+  f_2 <- pi^YY * log(pi) * log(pi) + (1 - pi)^(1 - YY) * log((1 - pi)) * log((1 - pi))
+  
+  H_gamma <- f_1^2 * f ^(gamma-2) *(2*(gamma-1)/C_gamma + f^gamma/C_gamma^2) * 2*f^(gamma-1)*f_2 
+  
+  
+  return(sum(H_gamma))
+}
+
+
+# plot(gamma_fn2, 0, 10)
+curve(Vectorize(gamma_fn2)(x), 0, 1)
+
+gamma_hat <- optimise(gamma_fn2,c(0,1))$minimum
 
 
 # 新たなガンマによる推定結果
@@ -184,9 +208,17 @@ beta_hat_gamma_hat <- estimate_pra_fn(gamma_hat)
 
 gamma_0 <- 0.1
 estimate_fn <- function(gamma_0){
-  gamma_0 <<- gamma_0
-  gamma_hat <- optimise(gamma_fn1,c(0,2.5))$minimum
   
+  gamma_fn1 <- function(gamma){
+    beta_hat <- estimate_pra_fn(gamma)$beta_hat
+    
+    or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
+    lp <- exp(or_ml)
+    pi <- lp/(1+lp)
+    return(-sum(pi^(gamma_0+1)+(1-pi)^(gamma_0+1))^(1/(gamma_0+1)))
+  }
+  
+  gamma_hat <- optimise(gamma_fn1,c(0,2.5))$minimum
   beta_hat_gamma <- estimate_pra_fn(gamma_hat)$beta_hat
   
   return(list(beta_hat_gamma=beta_hat_gamma, gamma_hat=gamma_hat))
@@ -247,14 +279,14 @@ boxplot(results.beta_t)
 # write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma0-5.csv")
 # write_csv2(export_data %>% summary() %>% data.frame(), file = "~/Projects/gamma_DR_ver0.1/results/gamma0-5summary.csv")
 
-gamma <- 2
-
+gamma <- 0
 beta_hat <- estimate_pra_fn(gamma)$beta_hat
 
 lm1 <- exp(beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4])
 psy1 <- lm1/(lm1+1)
 lm2 <- exp(beta_hat[1] + ZZ%*%beta_hat[3:4])
 psy2 <- lm2/(lm2+1)
+
 
 tau <- mean(psy1)-mean(psy2)
 
