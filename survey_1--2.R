@@ -41,7 +41,7 @@ p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
 
 #　誤判別を含むアウトカムデータの生成
 ## Misclassified outcomesの割合の設定
-pp01 <- 0.3; pp10 <- 0.3
+pp01 <- 0.4; pp10 <- 0.4
 
 YY1 <- YY1_t <- YY0 <- YY0_t <- YY <- YY_t <- rep(0,n);
 for(i in 1:n){
@@ -166,11 +166,10 @@ DD <- function(expr, name, order = 1) {
   else DD(D(expr, name), name, order - 1)
 }
 
-f <- expression(pi^y + (1-pi)^(1-y))
-DD(f, "y", 1)   
+f <- expression(pi^YY * (1-pi)^(1-YY))
+DD(f, "YY", 2)   
 
 gamma_fn2 <- function(gamma){
-  
   
   beta_hat <- estimate_pra_fn(gamma)$beta_hat
 
@@ -178,21 +177,23 @@ gamma_fn2 <- function(gamma){
   lp <- exp(or_ml)
   pi <- lp/(1+lp)
   
-  C_gamma <- {pi^(1+gamma) + (1-pi)^(1+gamma)}^(gamma/(gamma+1))
+  C_gamma <- (pi^(1+gamma) + (1-pi)^(1+gamma))^(gamma/(gamma+1))
   
-  f <- pi^YY + (1-pi)^(1-YY)
-  f_1 <- pi^YY * log(pi) - (1 - pi)^(1 - YY) * log((1 - pi))
-  f_2 <- pi^YY * log(pi) * log(pi) + (1 - pi)^(1 - YY) * log((1 - pi)) * log((1 - pi))
+  f <- pi^YY * (1-pi)^(1-YY)
   
-  H_gamma <- f_1^2 * f ^(gamma-2) *(2*(gamma-1)/C_gamma + f^gamma/C_gamma^2) * 2*f^(gamma-1)*f_2 
+  A <- log(pi/(1-pi))
   
+  f_1 <- f * A
+  f_2 <- f * A^2
+  
+  H_gamma <- f^gamma * 2*A*(A*+gamma-1)/C_gamma + f^(2*gamma)*A/C_gamma^2
   
   return(sum(H_gamma))
 }
 
-
 # plot(gamma_fn2, 0, 10)
-curve(Vectorize(gamma_fn2)(x), 0, 1)
+curve(Vectorize(gamma_fn2)(x), 0, 0.1)
+
 
 gamma_hat <- optimise(gamma_fn2,c(0,1))$minimum
 

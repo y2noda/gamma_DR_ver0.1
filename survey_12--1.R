@@ -185,6 +185,37 @@ curve(Vectorize(gamma_fn1)(x), 0, 10)
 # gamma_hat <- optimise(gamma_fn2,c(0,2.5))$minimum
 
 
+gamma_fn2 <- function(gamma){
+  
+  
+  beta_hat <- estimate_pra_fn(gamma)$beta_hat
+  
+  or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
+  lp <- exp(or_ml)
+  pi <- lp/(1+lp)
+  
+  C_gamma <- {pi^(1+gamma) + (1-pi)^(1+gamma)}^(gamma/(gamma+1))
+  
+  f <- pi^YY * (1-pi)^(1-YY)
+  f_1 <- pi^YY * log(pi) * (1 - pi)^(1 - YY) - pi^YY * ((1 - pi)^(1 - YY) * log((1 - pi)))
+  f_2 <- pi^YY * log(pi) * log(pi) * (1 - pi)^(1 - YY) - pi^YY * log(pi) * ((1 - pi)^(1 - YY) * log((1 - pi))) 
+  - (pi^YY * log(pi) * ((1 - pi)^(1 - YY) * log((1 - pi))) - pi^YY * ((1 - pi)^(1 - YY) * log((1 - pi)) * log((1 - pi))))
+  
+  H_gamma <- f_1^2 * f^(gamma-2) * (2*(gamma-1)/C_gamma + f^gamma/C_gamma^2) + 2*f^(gamma-1)*f_2/C_gamma 
+  
+  
+  return(sum(H_gamma))
+}
+
+
+# plot(gamma_fn2, 0, 10)
+curve(Vectorize(gamma_fn2)(x), 0, 5)
+
+
+
+
+
+
 # 新たなガンマによる推定結果
 
 beta_hat_gamma_hat <- estimate_pra_fn(gamma_hat)
