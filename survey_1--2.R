@@ -41,7 +41,9 @@ p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
 
 #　誤判別を含むアウトカムデータの生成
 ## Misclassified outcomesの割合の設定
-pp01 <- 0.2; pp10 <- 0.2
+pp01_t <- 0.1; pp10_t <- 0.1
+pp01_c <- 0.2; pp10_c <- 0.2
+
 YY1 <- YY1_t <- YY0 <- YY0_t <- YY <- YY_t <- rep(0,n);
 for(i in 1:n){
   # potential outcomesの乱数の発生
@@ -53,19 +55,29 @@ for(i in 1:n){
   YY_t[i] <- TT[i]*YY1_t[i]+(1-TT[i])*YY0_t[i] #なし
   
   # Misclassified outcomesの設定
-  # if(YY1_t[i]==1){
-  #   Mis_p <- rbinom(1,size=1,prob=pp01)
-  #   if(Mis_p==1 & pp01_lm[i] < 0) YY1[i] <- 0
-  # }
-  if(YY_t[i]==1){
-    Mis_p <- rbinom(1,size=1,prob=pp01)
-    if(Mis_p==1) YY[i] <- 0
+  if(TT[i]==1){
+    if(YY_t[i]==1){
+      Mis_p <- rbinom(1,size=1,prob=pp01_t)
+      if(Mis_p==1) YY[i] <- 0
+    }
+    
+    if(YY_t[i]==0){
+      Mis_p <- rbinom(1,size=1,prob=pp10_t)
+      if(Mis_p==1) YY[i] <- 1
+    }
+  }
+  if(TT[i]==0){
+    if(YY_t[i]==1){
+      Mis_p <- rbinom(1,size=1,prob=pp01_c)
+      if(Mis_p==1) YY[i] <- 0
+    }
+    
+    if(YY_t[i]==0){
+      Mis_p <- rbinom(1,size=1,prob=pp10_c)
+      if(Mis_p==1) YY[i] <- 1
+    }
   }
   
-  if(YY_t[i]==0){
-    Mis_p <- rbinom(1,size=1,prob=pp10)
-    if(Mis_p==1) YY[i] <- 1
-  }
 }
 
 sum(YY == YY_t)
@@ -220,6 +232,7 @@ gamma_hat <- optimise(gamma_fn2,c(0,2))$minimum
 
 beta_hat_gamma_hat <- estimate_pra_fn(gamma_hat)
 
+beta_hat_gamma_hat
 
 # まとめた推定
 
