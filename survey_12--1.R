@@ -39,7 +39,7 @@ betax <- 0.2+TT+XX[,1]+XX[,2]
 # 誤判別確率の生成
 
 ## アウトカムに誤判別が含まれる割合
-mp <- 0.12
+mp <- 0.3
 mp_size <- n * mp
 
 ## 誤判別のアウトカムのインデックス
@@ -213,6 +213,27 @@ curve(Vectorize(gamma_fn2)(x), 0, 5)
 
 
 
+# gamma_fn2 <- function(gamma){
+#   
+#   beta_hat <- estimate_pra_fn(gamma)$beta_hat
+#   
+#   or_ml <- beta_hat[1] + TT*beta_hat[2] + ZZ%*%beta_hat[3:4]
+#   lp <- exp(or_ml)
+#   pi <- lp/(1+lp)
+#   
+#   C_gamma <- (pi^(1+gamma) + (1-pi)^(1+gamma))^(gamma/(gamma+1))
+#   
+#   f0 <- (pi^2/(1-pi))^gamma - (1-pi)^gamma
+#   f1 <- pi^gamma - ((1-pi)^2/pi)^gamma
+#   
+#   H_gamma <- ifelse(YY==0, f0*pi*log(pi/(1-pi))/(C_gamma*2*gamma), 
+#                     (-1)*f1*(1-pi)*log(pi/(1-pi))/(C_gamma*2*gamma))
+#   
+#   return(sum(H_gamma))
+# }
+# 
+# ## plot(gamma_fn2, 0, 10)
+# curve(Vectorize(gamma_fn2)(x), 0, 0.11)
 
 
 
