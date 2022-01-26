@@ -188,7 +188,9 @@ make_df_fn <- function(df, est_type, mp_num, file_path){
 
 library(gt)
 
-dat <- read_csv2("~/Projects/gamma_DR_ver0.1/results/all_beta.csv")
+path <- "~/gamma_DR_ver0.1/results/all_beta.csv"
+# path <- "~/Projects/gamma_DR_ver0.1/results/all_beta.csv"
+dat <- read_csv2(path)
 
 
 p2 <- ggplot(dat, aes(x = MP, y = Beta, fill = factor(Type))) +
@@ -198,10 +200,23 @@ p2 <- ggplot(dat, aes(x = MP, y = Beta, fill = factor(Type))) +
 
 p2
 
+dat <- dat %>% 
+  group_by(Type, MP) %>% 
+  summarise(mean = mean(Beta),
+            sd = sd(Beta)) %>% 
+  ungroup()
+
+dat %>%
+  gt(rowname_col = "Type", groupname_col = "MP")
+  
+
+
+### gamma
+
 gamma_list <- NULL
 
-
-path <- "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m03.csv"
+# path <- "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m03.csv"
+path <- "~/gamma_DR_ver0.1/results/gamma_hat_m03.csv"
 gmean <- read_csv2(path)$results.gamma %>% as.vector() %>% mean()
 
 gamma_list <- append(gamma_list,gmean) 
@@ -212,7 +227,9 @@ gamma_df <- data.frame("miss prob"=mp_list, "gamma.mean"=gamma_list)
 
 # write_csv2(gamma_df, file = "~/Projects/gamma_DR_ver0.1/results/all_gamma_mean.csv")
 
-dat <- read_csv2("~/Projects/gamma_DR_ver0.1/results/all_gamma_mean.csv")
+# path <- "~/Projects/gamma_DR_ver0.1/results/all_gamma_mean.csv"
+path <- "~/gamma_DR_ver0.1/results/all_gamma_mean.csv"
+dat <- read_csv2(path)
 
 dat %>% gt()
 
