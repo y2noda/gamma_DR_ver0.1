@@ -41,8 +41,8 @@ p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
 
 #　誤判別を含むアウトカムデータの生成
 ## Misclassified outcomesの割合の設定
-pp01_t <- 0.1; pp10_t <- 0.1
-pp01_c <- 0.2; pp10_c <- 0.2
+pp01_t <- 0; pp10_t <- 0
+pp01_c <- 0; pp10_c <- 0
 
 YY1 <- YY1_t <- YY0 <- YY0_t <- YY <- YY_t <- rep(0,n);
 for(i in 1:n){
