@@ -105,8 +105,8 @@ for (i in 1:kk_T) {
   
   #　誤判別を含むアウトカムデータの生成
   ## Misclassified outcomesの割合の設定
-  pp01_t <- 0.1; pp10_t <- 0.1
-  pp01_c <- 0.1; pp10_c <- 0.1
+  pp01_t <- 0.05; pp10_t <- 0.05
+  pp01_c <- 0.05; pp10_c <- 0.05
   
   YY1 <- YY1_t <- YY0 <- YY0_t <- YY <- YY_t <- rep(0,n);
   for(i in 1:n){
@@ -144,9 +144,9 @@ for (i in 1:kk_T) {
     
   }
   
-  gamma_hat <- 0
+  # gamma_hat <- 0
   
-  # gamma_hat <- optimise(gamma_fn2,c(0,2))$minimum
+  gamma_hat <- optimise(gamma_fn2,c(0,2))$minimum
   beta_hat <- estimate_pra_fn(gamma_hat)$beta_hat
   
   beta_t <- beta_hat[2]
@@ -164,11 +164,11 @@ results.gamma %>% summary()
 # 0.4548  0.6047  0.6601  0.6642  0.7230  0.8835 
 
 ## アウトプット
-# export_data <- data.frame(results.beta_t)
-# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/beta_naive_m03.csv")
+export_data <- data.frame(results.beta_t)
+# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/beta_hat_m00.csv")
 # 
-# export_data <- data.frame(results.gamma)
-# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma_naive_m03.csv")
+export_data <- data.frame(results.gamma)
+# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m00.csv")
 
 ## input
 df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_hat_m03.csv") 
@@ -194,18 +194,27 @@ make_df_fn <- function(df, est_type, mp_num, file_path){
   return(results)
 }
 
-# df <- data.frame()
-# df <- make_df_fn(df, "naive","0.3","~/Projects/gamma_DR_ver0.1/results/beta_naive_m03.csv")
+est_types <- c("naive", "hat")
+mp_nums <- c("00","005","01","015","02","03")
 
-# df %>% dim
+df <- data.frame()
+for (est_type in est_type) {
+  for(mp_num in mp_nums){
+    file_path <- paste("~/Projects/gamma_DR_ver0.1/results/", "beta_",est_type ,"_m" ,mp_num ,".csv" ,sep="")
+    df <- make_df_fn(df, est_type,mp_num,file_path)
+  }
+}
 # write_csv2(df, file = "~/Projects/gamma_DR_ver0.1/results/all_beta.csv")
+
+df %>% dim
+
 
 ## plot
 
 library(gt)
 
-path <- "~/gamma_DR_ver0.1/results/all_beta.csv"
-# path <- "~/Projects/gamma_DR_ver0.1/results/all_beta.csv"
+# path <- "~/gamma_DR_ver0.1/results/all_beta.csv"
+path <- "~/Projects/gamma_DR_ver0.1/results/all_beta.csv"
 dat <- read_csv2(path)
 
 
@@ -222,8 +231,12 @@ dat <- dat %>%
             sd = sd(Beta)) %>% 
   ungroup()
 
-dat %>%
+beta_table <- dat %>%
   gt(rowname_col = "Type", groupname_col = "MP")
+
+beta_table
+
+gtsave(beta_table, "~/Projects/gamma_DR_ver0.1/fig/beta_table.tex")
   
 
 
@@ -231,20 +244,27 @@ dat %>%
 
 gamma_list <- NULL
 
+mp_nums <- c("00","005","01","015","02","03")
+
+for (mp_num in mp_nums) {
+  file_path <- paste("~/Projects/gamma_DR_ver0.1/results/", "gamma_hat_m" ,mp_num ,".csv" ,sep="")
+  gmean <- read_csv2(file_path)$results.gamma %>% as.vector() %>% mean()
+  
+  gamma_list <- append(gamma_list,gmean) 
+}
+
+# 
 # path <- "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m03.csv"
-path <- "~/gamma_DR_ver0.1/results/gamma_hat_m03.csv"
-gmean <- read_csv2(path)$results.gamma %>% as.vector() %>% mean()
+# path <- "~/gamma_DR_ver0.1/results/gamma_hat_m03.csv"
+# 
+# mp_list <- c("0.05","0.1","0.15","0.2","0.3")
 
-gamma_list <- append(gamma_list,gmean) 
-
-mp_list <- c("0.05","0.1","0.15","0.2","0.3")
-
-gamma_df <- data.frame("miss prob"=mp_list, "gamma.mean"=gamma_list) 
+gamma_df <- data.frame("miss prob"=mp_nums, "gamma.mean"=gamma_list) 
 
 # write_csv2(gamma_df, file = "~/Projects/gamma_DR_ver0.1/results/all_gamma_mean.csv")
 
-# path <- "~/Projects/gamma_DR_ver0.1/results/all_gamma_mean.csv"
-path <- "~/gamma_DR_ver0.1/results/all_gamma_mean.csv"
+path <- "~/Projects/gamma_DR_ver0.1/results/all_gamma_mean.csv"
+# path <- "~/gamma_DR_ver0.1/results/all_gamma_mean.csv"
 dat <- read_csv2(path)
 
 dat %>% gt()
