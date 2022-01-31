@@ -236,7 +236,7 @@ beta_table <- dat %>%
 
 beta_table
 
-gtsave(beta_table, "~/Projects/gamma_DR_ver0.1/fig/beta_table.tex")
+# gtsave(beta_table, "~/Projects/gamma_DR_ver0.1/fig/beta_table.tex")
   
 
 
@@ -267,6 +267,10 @@ path <- "~/Projects/gamma_DR_ver0.1/results/all_gamma_mean.csv"
 # path <- "~/gamma_DR_ver0.1/results/all_gamma_mean.csv"
 dat <- read_csv2(path)
 
-dat %>% gt()
+gamma_table <- dat %>% gt()
+
+gamma_table
+
+gtsave(gamma_table, "~/Projects/gamma_DR_ver0.1/fig/gamma_table.tex")
 
 

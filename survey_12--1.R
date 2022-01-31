@@ -209,7 +209,7 @@ gamma_fn2 <- function(gamma){
 
 
 # plot(gamma_fn2, 0, 10)
-curve(Vectorize(gamma_fn2)(x), 0, 5)
+curve(Vectorize(gamma_fn2)(x), 0, 2)
 
 
 
