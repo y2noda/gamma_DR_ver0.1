@@ -51,7 +51,7 @@ p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
 
 # Misclassified outcomesの割合の設定
 # pp11 <- 0.7; pp10 <- 0.3
-pp11 <- 0.8; pp10 <- 0.2
+pp11 <- 0.9; pp10 <- 0.1
 # pp11 <- 1.0; pp10 <- 0.0
 
 
@@ -140,6 +140,7 @@ fn <- function(beta){
 
 # パラメータ推定 c(0,1,1,1)
 estimate_pra_fn <- function(gamma){
+  gamma <<- gamma
   return(beta_hat <- nleqslv(c(0,1,1,1), fn)$x)
 }
 
@@ -167,7 +168,7 @@ results.beta_t <- cbind(results.beta_t, beta_t_list)
 colnames(results.beta_t) <- gamma_list
 
 export_data <- data.frame(results.beta_t)
-write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/result.csv")
+# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/result.csv")
 
 export_data %>% summary() %>% xtable(label="tb-ref")
 ####ガンマの推定####

@@ -49,7 +49,7 @@ p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
 
 
 # Misclassified outcomesの割合の設定
-pp11 <- 0.7; pp10 <- 0.3
+pp11 <- 0.9; pp10 <- 0.1
 # pp11 <- 0.8; pp10 <- 0.2
 # pp11 <- 1.0; pp10 <- 0.0
 
