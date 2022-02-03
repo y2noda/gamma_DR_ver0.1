@@ -9,125 +9,168 @@ library(nleqslv)
 rm(list = ls(all.names = TRUE))
 
 # サンプルサイズ
-n = 200
+n = 500
 
 # シミュレーションの繰り返し数
-kk_T <- 1000
+kk_T <- 500
 
 pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
 
-results.beta_t <- NULL
+results.beta_hat <- NULL
 results.gamma <- NULL
+
+# library(mlbench)
+# df <- PimaIndiansDiabetes2
 
 for (i in 1:kk_T) {
   setTxtProgressBar(pb,i)
   
   # 共変量の分布の設定、乱数の発生
-  mu <- c(0,0,0,0)
+  mu <- c(0,0,0,0,0,0,0,0,0)
   
   ## 相関パラメータ
   rho <- 0
-  Sigma <- matrix(c(1,rho,rho,rho,
-                    rho,1,rho,rho,
-                    rho,rho,1,rho,
-                    rho,rho,rho,1),4,4)
+  Sigma <- matrix(c(1,rho,rho,rho,rho,rho,rho,rho,rho,
+                    rho,1,rho,rho,rho,rho,rho,rho,rho,
+                    rho,rho,1,rho,rho,rho,rho,rho,rho,
+                    rho,rho,rho,1,rho,rho,rho,rho,rho,
+                    rho,rho,rho,rho,1,rho,rho,rho,rho,
+                    rho,rho,rho,rho,rho,1,rho,rho,rho,
+                    rho,rho,rho,rho,rho,rho,1,rho,rho,
+                    rho,rho,rho,rho,rho,rho,rho,1,rho,
+                    rho,rho,rho,rho,rho,rho,rho,rho,1),9,9)
   
   XX <- mvrnorm(n, mu, Sigma)
   
   # 処置の分布の設定,生成
-  T_lm <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]
-  p_T <- exp(T_lm)/(1+exp(T_lm))
-  
-  TT <- rep(0,n)
-  for (i in 1:n) {
-    TT[i] <- rbinom(1,size=1,prob=p_T[i])
-  }
+  # T_lm <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]
+  # p_T <- exp(T_lm)/(1+exp(T_lm))
+  # 
+  # TT <- rep(0,n)
+  # for (i in 1:n) {
+  #   TT[i] <- rbinom(1,size=1,prob=p_T[i])
+  # }
   
   # Potential outcomesの分布の設定
   # アウトカムの回帰パラメータの設定
-  Y_lm1 <- 0.2+1+XX[,1]+XX[,2]+XX[,3]+XX[,4]; Y_lm0 <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]
-  p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
+  # Y_lm1 <- 0.2+1+XX[,1]+XX[,2]+XX[,3]+XX[,4]; Y_lm0 <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]
+  # p_Y1 <- exp(Y_lm1)/(1+exp(Y_lm1)); p_Y0 <- exp(Y_lm0)/(1+exp(Y_lm0))
+  
+  Y_lm <- XX[,1] - XX[,2] + XX[,3]
+  p_Y <- exp(Y_lm)/(1+exp(Y_lm))
   
   # 傾向スコアの算出
-  ps_fit <- glm(TT~XX, family=binomial)$fit
-  
-  # ZZ
-  ZZ <- XX[,1:2]
-  ZZ_tilde <- XX[,3:4]
-  
+  # ps_fit <- glm(TT~XX, family=binomial)$fit
+  # 
+  # # ZZ
+  # ZZ <- XX[,1:2]
+  # ZZ_tilde <- XX[,3:4]
+  # 
   
   
   
   
   #　誤判別を含むアウトカムデータの生成
   ## Misclassified outcomesの割合の設定
-  pp01_t <- 0.1; pp10_t <- 0.1
-  pp01_c <- 0.1; pp10_c <- 0.1
+  # pp01_t <- 0.1; pp10_t <- 0.1
+  # pp01_c <- 0.1; pp10_c <- 0.1
+  
+  pp <- 0.1
   
   YY1 <- YY1_t <- YY0 <- YY0_t <- YY <- YY_t <- rep(0,n);
   for(i in 1:n){
-    # potential outcomesの乱数の発生
-    YY1[i] <- YY1_t[i] <-rbinom(1, size=1, prob=p_Y1[i])
-    YY0[i] <- YY0_t[i] <- rbinom(1, size=1, prob=p_Y0[i])
+    # # potential outcomesの乱数の発生
+    # YY1[i] <- YY1_t[i] <-rbinom(1, size=1, prob=p_Y1[i])
+    # YY0[i] <- YY0_t[i] <- rbinom(1, size=1, prob=p_Y0[i])
     
   #   Mis_p <- rbinom(1,size=1,prob=pp01_t)
   #   if(Mis_p==1) {
   #     YY1[i] <- ifelse(YY1[i]==1, 0, 1)
   # }
     
-    # 観測されるoutcome
-    YY[i] <- TT[i]*YY1[i]+(1-TT[i])*YY0[i] #汚染あり
-    YY_t[i] <- TT[i]*YY1_t[i]+(1-TT[i])*YY0_t[i] #なし
+    # # 観測されるoutcome
+    # YY[i] <- TT[i]*YY1[i]+(1-TT[i])*YY0[i] #汚染あり
+    # YY_t[i] <- TT[i]*YY1_t[i]+(1-TT[i])*YY0_t[i] #なし
+    # 
+    # # Misclassified outcomesの設定
+    # if(TT[i]==1){
+    #   if(YY_t[i]==1){
+    #     Mis_p <- rbinom(1,size=1,prob=pp01_t)
+    #     if(Mis_p==1) YY[i] <- 0
+    #   }
+    #   
+    #   if(YY_t[i]==0){
+    #     Mis_p <- rbinom(1,size=1,prob=pp10_t)
+    #     if(Mis_p==1) YY[i] <- 1
+    #   }
+    # }
+    # if(TT[i]==0){
+    #   if(YY_t[i]==1){
+    #     Mis_p <- rbinom(1,size=1,prob=pp01_c)
+    #     if(Mis_p==1) YY[i] <- 0
+    #   }
+    #   
+    #   if(YY_t[i]==0){
+    #     Mis_p <- rbinom(1,size=1,prob=pp10_c)
+    #     if(Mis_p==1) YY[i] <- 1
+    #   }
+    # }
     
-    # Misclassified outcomesの設定
-    if(TT[i]==1){
-      if(YY_t[i]==1){
-        Mis_p <- rbinom(1,size=1,prob=pp01_t)
-        if(Mis_p==1) YY[i] <- 0
-      }
-      
-      if(YY_t[i]==0){
-        Mis_p <- rbinom(1,size=1,prob=pp10_t)
-        if(Mis_p==1) YY[i] <- 1
-      }
+    YY[i] <-rbinom(1, size=1, prob=p_Y[i])
+    Mis_p <- rbinom(1,size=1,prob=pp)
+    if(Mis_p==1){
+      ifelse(YY[i]==1, YY[i]<-0,YY[i]<-1)
     }
-    if(TT[i]==0){
-      if(YY_t[i]==1){
-        Mis_p <- rbinom(1,size=1,prob=pp01_c)
-        if(Mis_p==1) YY[i] <- 0
-      }
-      
-      if(YY_t[i]==0){
-        Mis_p <- rbinom(1,size=1,prob=pp10_c)
-        if(Mis_p==1) YY[i] <- 1
-      }
-    }
-    
   }
   
   
   # 推定方程式
   estimate_eq <- function(beta){
-    beta_0 <- beta[1]
-    beta_t <- beta[2]
-    beta_x <- beta[3:6]
+    # beta_0 <- beta[1]
+    # beta_t <- beta[2]
+    beta_x <- beta[1:9]
     
-    or_ml <- beta_0 + TT*beta_t + XX%*%beta_x
+    # or_ml <- beta_0 + TT*beta_t + XX%*%beta_x
+    or_ml <- XX%*%beta_x
     lp <- exp((gamma+1)*(or_ml))
     lq <- exp(YY*(gamma+1)*(or_ml))
     pi <- lp/(1+lp)
     g <- (lq/(1+lp))^(gamma/(1+gamma))
     # w <- ifelse(TT==1, 1/ps_fit, 1/(1-ps_fit))
     
-    return(c(t(g*(YY-pi))%*%rep(1,n), t(g*(YY-pi))%*%TT, t(g*(YY-pi))%*%XX))
+    # return(c(t(g*(YY-pi))%*%rep(1,n), t(g*(YY-pi))%*%TT, t(g*(YY-pi))%*%XX))
+    return(t(g*(YY-pi))%*%XX)
   }
   
+  # gamma <- 2
+  # 
+  # YY <- rep(0,n)
+  # 
+  # g <- function(gamma){
+  #   beta <- c(0.2,1,1,1,1,1)
+  #   beta_0 <- beta[1]
+  #   beta_t <- beta[2]
+  #   beta_x <- beta[3:6]
+  #   
+  #   # or_ml <- beta_0 + TT*beta_t + XX%*%beta_x
+  #   
+  #   or_ml <- rep(1,n)
+  #   lp <- exp((gamma+1)*(or_ml))
+  #   lq <- exp(YY*(gamma+1)*(or_ml))
+  #   pi <- lp/(1+lp)
+  #   g <- (lq/(1+lp))^(gamma/(1+gamma))
+  #   return(mean(g))
+  # }
+  # 
+  # # h <- Vectorize(g); curve(h,0,100)
+  # curve(Vectorize(g)(x), 0, 10)
+  # # plot(g_function,0,30)
   
   gamma <- 0
   # パラメータ推定 初期値：c(0,0,0,0)
   estimate_pra_fn <- function(gamma){
     gamma <<- gamma
-    beta_hat <- nleqslv(c(0.2,1,1,1,1,1), estimate_eq, method = "Newton")$x
+    beta_hat <- nleqslv(c(1,1,1,1,1,1,1,1,1), estimate_eq, method = "Newton")$x
     
     return(list(beta_hat=beta_hat, gamma=gamma))
   }
@@ -156,13 +199,13 @@ for (i in 1:kk_T) {
   # gamma_hat <- optimise(gamma_fn2,c(0,2))$minimum
   beta_hat <- estimate_pra_fn(2)$beta_hat
   
-  beta_t <- beta_hat[2]
+  # beta_t <- beta_hat
   
   # results.gamma <- append(results.gamma, gamma_hat)
-  results.beta_t <- append(results.beta_t, beta_t)
+  results.beta_hat <- append(results.beta_hat, beta_hat)
 }
 
-results.beta_t %>% summary()
+results.beta_hat %>% summary()
 boxplot(results.beta_t)
 
 results.gamma %>% summary()
