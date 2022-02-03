@@ -16,8 +16,9 @@ kk_T <- 500
 
 pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
 
-results.beta_hat <- NULL
-results.gamma <- NULL
+results.beta_hat <- data.frame(matrix(vector(), kk_T, 9))
+colnames(results.beta_hat) <- c("b1","b2","b3","b4","b5","b6","b7","b8","b9")
+# results.gamma <- NULL
 
 # library(mlbench)
 # df <- PimaIndiansDiabetes2
@@ -26,7 +27,7 @@ for (i in 1:kk_T) {
   setTxtProgressBar(pb,i)
   
   # 共変量の分布の設定、乱数の発生
-  mu <- c(0,0,0,0,0,0,0,0,0)
+  mu<- c(0,0,0,0,0,0,0,0,0)
   
   ## 相関パラメータ
   rho <- 0
@@ -75,10 +76,10 @@ for (i in 1:kk_T) {
   # pp01_t <- 0.1; pp10_t <- 0.1
   # pp01_c <- 0.1; pp10_c <- 0.1
   
-  pp <- 0.1
+  pp10 <- 0.05; pp01 <- 0.1
   
-  YY1 <- YY1_t <- YY0 <- YY0_t <- YY <- YY_t <- rep(0,n);
-  for(i in 1:n){
+  YY <- rep(0,n)
+  for(j in 1:n){
     # # potential outcomesの乱数の発生
     # YY1[i] <- YY1_t[i] <-rbinom(1, size=1, prob=p_Y1[i])
     # YY0[i] <- YY0_t[i] <- rbinom(1, size=1, prob=p_Y0[i])
@@ -116,13 +117,103 @@ for (i in 1:kk_T) {
     #   }
     # }
     
-    YY[i] <-rbinom(1, size=1, prob=p_Y[i])
-    Mis_p <- rbinom(1,size=1,prob=pp)
-    if(Mis_p==1){
-      ifelse(YY[i]==1, YY[i]<-0,YY[i]<-1)
-    }
+    p_Yc <- pp10*(1-p_Y[j])+(1-pp01)*p_Y[j]
+    
+    YY[j] <-rbinom(1, size=1, prob=p_Yc)
   }
   
+  
+#matlabのコードを再現
+  
+  #input
+  # y: ２値アウトカム(n x 1)
+  # X: 共変量行列(n x p)
+  # gamma: パラメータ(1 x 1)
+  # b1: 初期値(p x 1)
+  
+  #output
+  # b1: 推定量(p x 1)
+  # wi: 重み(n x 1)
+  # cov: 漸近共分散行列(p x p)
+  
+  gamma_logistic_nt <- function(y, X, gamma, b1){
+    
+    n <- dim(X)[1]
+    p <- dim(X)[2]
+    
+    lam = log(p)/n^1.5
+    
+    p <- p - 1
+    DI <- lam*diag(p+1)
+    # DI[1,1]=0
+    
+    val1 <- obj(y, X, gamma, lam, b1)
+    d <- 1; sg <- 1; itr <-100
+    
+    while (d > 10^(-3) && sg <= itr) {
+      b0 <- b1
+      val0 <- val1
+      ei_gamma <- exp((gamma+1)*(X%*%b0))
+      wi <- ( (ei_gamma^y)/(1+ei_gamma) )^(gamma/(gamma+1))
+      pi <- ei_gamma/(1+ei_gamma)
+      vi <- pi*(1-pi)
+      fi <- ((1+ei_gamma)/(1+exp(X%*%b1))^(gamma+1))^(1/(gamma+1))
+      
+      A <- (t(X)%*%diag(as.vector(fi*vi/n))%*%X + DI)
+      b <- (t(X)%*%diag(as.vector(wi/n)) %*% (y-pi)-DI%*%b0)
+      HG <- solve(A, b)
+      
+      val1 <- amj(y, X, gamma, lam, val0, b0, HG)$val1
+      b1 <- amj(y,X, gamma, lam, val0, b0, HG)$b1
+      
+      d <- norm(matrix(b1-b0))/norm(matrix(b0))
+      sg <- sg+1
+    }
+    
+    if(sg > itr){
+      print(paste('Not converge at gamma (nt) = ', toString(gamma)))
+    }
+    
+    # asymptotic covariance
+    ei_gamma <- exp((gamma+1)*(X%*%b1))
+    wi <- ( (ei_gamma^y)/(1+ei_gamma) )^(gamma/(gamma+1))
+    pi <- ei_gamma/(1+ei_gamma)
+    vi <- pi*(1-pi)
+    fi <- ((1+ei_gamma)/(1+exp(X%*%b1))^(gamma+1))^(1/(gamma+1))
+    delta <- gamma*(t(X)%*%diag(as.vector(wi*(vi-(y-pi)^2) / n))%*%X)
+    
+    U1 <- (t(X)%*%diag(as.vector((wi*(y-pi))^2 / n)) %*%X)
+    H2 <- (t(X)%*%diag(as.vector(fi*vi / n)) %*%X) + delta + DI
+    cov = solve(H2, U1/H2 /n)
+    
+    return(list(b1=b1, wi=wi, cov=cov))
+  }
+  
+  
+obj <- function(y, X, gamma, lam, beta){
+  ei_gamma <- exp((gamma+1)*X%*%beta)
+  val <- mean( ((ei_gamma^y)/(1+ei_gamma))^(gamma/(gamma+1)) )/gamma - 0.5*lam*norm(matrix(beta))^2
+  return(val)
+}
+
+amj <- function(y, X, gamma, lam, val0, b0, HG){
+  rate <- 1
+  amj <- 1
+  amj_num <- 30
+  
+  b1 <- b0 + rate * HG
+  val1 <- obj(y, X, gamma, lam, b1)
+  while(val1 < val0 - 10^-8 && amj <= amj_num){
+    b1 <- b0 + (0.5^amj * rate) * HG
+    val1 <- obj(y, X, gamma, lam, b1)
+    amj <- amj + 1
+  }
+  if(amj > amj_num){
+    print('gamma-logi (nt): armijo limit')
+  }
+  return(list(val1=val1, b1=b1))
+}
+    
   
   # 推定方程式
   estimate_eq <- function(beta){
@@ -141,6 +232,13 @@ for (i in 1:kk_T) {
     # return(c(t(g*(YY-pi))%*%rep(1,n), t(g*(YY-pi))%*%TT, t(g*(YY-pi))%*%XX))
     return(t(g*(YY-pi))%*%XX)
   }
+  
+  gamma <- 2
+  b1 <- rep(1,9)
+  res_df <- data.frame(t(gamma_logistic_nt(YY, XX, gamma, b1)$b1))
+  colnames(res_df) <- c("b1","b2","b3","b4","b5","b6","b7","b8","b9")
+  
+  results.beta_hat[i,] <- res_df
   
   # gamma <- 2
   # 
@@ -166,14 +264,14 @@ for (i in 1:kk_T) {
   # curve(Vectorize(g)(x), 0, 10)
   # # plot(g_function,0,30)
   
-  gamma <- 0
-  # パラメータ推定 初期値：c(0,0,0,0)
-  estimate_pra_fn <- function(gamma){
-    gamma <<- gamma
-    beta_hat <- nleqslv(c(1,1,1,1,1,1,1,1,1), estimate_eq, method = "Newton")$x
-    
-    return(list(beta_hat=beta_hat, gamma=gamma))
-  }
+  # gamma <- 0
+  # # パラメータ推定 初期値：c(0,0,0,0)
+  # estimate_pra_fn <- function(gamma){
+  #   gamma <<- gamma
+  #   beta_hat <- nleqslv(c(1,1,1,1,1,1,1,1,1), estimate_eq, method = "Newton")$x
+  #   
+  #   return(list(beta_hat=beta_hat, gamma=gamma))
+  # }
   
   # gamma_fn2 <- function(gamma){
   #   
@@ -197,16 +295,16 @@ for (i in 1:kk_T) {
   # gamma_hat <- 0
   
   # gamma_hat <- optimise(gamma_fn2,c(0,2))$minimum
-  beta_hat <- estimate_pra_fn(2)$beta_hat
+  # beta_hat <- estimate_pra_fn(2)$beta_hat
   
   # beta_t <- beta_hat
   
   # results.gamma <- append(results.gamma, gamma_hat)
-  results.beta_hat <- append(results.beta_hat, beta_hat)
+  # results.beta_hat <- append(results.beta_hat, beta_hat)
 }
 
 results.beta_hat %>% summary()
-boxplot(results.beta_t)
+# boxplot(results.beta_t)
 
 results.gamma %>% summary()
 
