@@ -10,6 +10,7 @@ library(MASS)
 rm(list = ls(all.names = TRUE))
 source("~/Projects/gamma_DR_ver0.1/gamma_logistic_nt.R")
 
+set.seed(123)
 # サンプルサイズ
 n = 500
 
@@ -19,32 +20,45 @@ kk_T <- 500
 pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
 
 results.beta_hat <- data.frame(matrix(vector(), kk_T, 9))
-colnames(results.beta_hat) <- c("b1","b2","b3","b4","b5","b6","b7","b8","b9")
+colnames(results.beta_hat) <- c("b1","b2","b3","b4","b5","b6","b7","b8")
 # results.gamma <- NULL
 
-# library(mlbench)
-# df <- PimaIndiansDiabetes2
+library(mlbench)
+data("PimaIndiansDiabetes2")
+df <- PimaIndiansDiabetes2
 
+df_s <- df[,1:8] %>% na.omit() %>% scale() %>% data.frame()
+# 
 for (i in 1:kk_T) {
   setTxtProgressBar(pb,i)
+#   
+# XX <- NULL  
+#   for (j in 1:n) {
+#     XX <- rbind(XX, sample_n(df_s, size=1))
+#     
+#   }
+# 
+# XX <- XX %>% as.matrix()
+# dimnames(XX) <- NULL
   
   # 共変量の分布の設定、乱数の発生
-  mu<- c(0,0,0,0,0,0,0,0,0)
-  
+  mu<- c(0,0,0,0,0,0,0,0)
+
   ## 相関パラメータ
   rho <- 0
-  Sigma <- matrix(c(1,rho,rho,rho,rho,rho,rho,rho,rho,
-                    rho,1,rho,rho,rho,rho,rho,rho,rho,
-                    rho,rho,1,rho,rho,rho,rho,rho,rho,
-                    rho,rho,rho,1,rho,rho,rho,rho,rho,
-                    rho,rho,rho,rho,1,rho,rho,rho,rho,
-                    rho,rho,rho,rho,rho,1,rho,rho,rho,
-                    rho,rho,rho,rho,rho,rho,1,rho,rho,
-                    rho,rho,rho,rho,rho,rho,rho,1,rho,
-                    rho,rho,rho,rho,rho,rho,rho,rho,1),9,9)
-  
+  Sigma <- matrix(c(1,rho,rho,rho,rho,rho,rho,rho,
+                    rho,1,rho,rho,rho,rho,rho,rho,
+                    rho,rho,1,rho,rho,rho,rho,rho,
+                    rho,rho,rho,1,rho,rho,rho,rho,
+                    rho,rho,rho,rho,1,rho,rho,rho,
+                    rho,rho,rho,rho,rho,1,rho,rho,
+                    rho,rho,rho,rho,rho,rho,1,rho,
+                    rho,rho,rho,rho,rho,rho,rho,1),8,8)
+
   XX <- mvrnorm(n, mu, Sigma)
-  
+
+
+  XX <- cbind(rep(1,n),XX)
   # 処置の分布の設定,生成
   # T_lm <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]
   # p_T <- exp(T_lm)/(1+exp(T_lm))
@@ -217,28 +231,28 @@ for (i in 1:kk_T) {
 # }
 #     
   
-  # 推定方程式
-  estimate_eq <- function(beta){
-    # beta_0 <- beta[1]
-    # beta_t <- beta[2]
-    beta_x <- beta[1:9]
-    
-    # or_ml <- beta_0 + TT*beta_t + XX%*%beta_x
-    or_ml <- XX%*%beta_x
-    lp <- exp((gamma+1)*(or_ml))
-    lq <- exp(YY*(gamma+1)*(or_ml))
-    pi <- lp/(1+lp)
-    g <- (lq/(1+lp))^(gamma/(1+gamma))
-    # w <- ifelse(TT==1, 1/ps_fit, 1/(1-ps_fit))
-    
-    # return(c(t(g*(YY-pi))%*%rep(1,n), t(g*(YY-pi))%*%TT, t(g*(YY-pi))%*%XX))
-    return(t(g*(YY-pi))%*%XX)
-  }
+  # # 推定方程式
+  # estimate_eq <- function(beta){
+  #   # beta_0 <- beta[1]
+  #   # beta_t <- beta[2]
+  #   beta_x <- beta[1:9]
+  #   
+  #   # or_ml <- beta_0 + TT*beta_t + XX%*%beta_x
+  #   or_ml <- XX%*%beta_x
+  #   lp <- exp((gamma+1)*(or_ml))
+  #   lq <- exp(YY*(gamma+1)*(or_ml))
+  #   pi <- lp/(1+lp)
+  #   g <- (lq/(1+lp))^(gamma/(1+gamma))
+  #   # w <- ifelse(TT==1, 1/ps_fit, 1/(1-ps_fit))
+  #   
+  #   # return(c(t(g*(YY-pi))%*%rep(1,n), t(g*(YY-pi))%*%TT, t(g*(YY-pi))%*%XX))
+  #   return(t(g*(YY-pi))%*%XX)
+  # }
   
   gamma <- 2
   b1 <- rep(1,9)
   res_df <- data.frame(t(gamma_logistic_nt(YY, XX, gamma, b1)$b1))
-  colnames(res_df) <- c("b1","b2","b3","b4","b5","b6","b7","b8","b9")
+  colnames(res_df) <- c("b1","b2","b3","b4","b5","b6","b7","b8")
   
   results.beta_hat[i,] <- res_df
   

@@ -1,0 +1,197 @@
+---
+title: "0217report"
+output:
+  pdf_document: 
+    latex_engine: xelatex 
+documentclass: bxjsarticle
+header-includes: 
+  - \usepackage{zxjatype} 
+  - \usepackage[ipaex]{zxjafont} 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(dev = "cairo_pdf", dev.args = list(family = "ipaexg"))
+```
+
+```{r library, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(MASS)
+```
+
+## 概要
+誤分類を含む二値アウトカムに対する、因果効果の推定量に関する手法のシュミレーションを行った結果である。
+
+
+## モデル化の設定
+ターゲット分布の潜在結果を以下のように周辺構造モデルを用いて考える。
+
+
+$E(Y| T, Z)$を，以下のようにモデル化する
+
+
+\begin{equation}
+   E[Y^{(t)}\mid Z] =  E\left[\frac{T}{e^{(t)}}Y\mid Z\right] = \pi(T,Z;\beta) = \textbf{expit}\{t\beta_t + z^T\beta_z\}
+\end{equation}
+
+ここで，$X=(Z,\tilde{Z})$とし，$Z$を共変量全体の中でモデルに必要な共変量とする。
+
+
+また$e^{(t)}$は傾向スコア$\Pr(T=t \mid X)$である。
+
+## データ生成過程
+
+ここでは、共変量Xとして考える。Zに変更した場合の仮定は以前の仮定の整理を確認。
+
+ベルヌーイ分布に従う$Y$のコンタミのないの分布
+\begin{equation}
+    f(y^{(t)}| x,t;\beta)=\{\pi(t,x)\}^{y^{(t)}}\{1-\pi(t,x)\}^{1-y^{(t)}}
+\end{equation}
+
+
+コンタミがある場合の，データ生成過程の設定
+\begin{equation}
+    g(Y=y|X=x,T=t) = c(x)f(y|x,t;\beta) + (1-c(x)) h(y|x,t))
+\end{equation}
+\begin{eqnarray}
+    \eta_{0}(x) &=& P(Y = 1 | Y_{true} = 0 , X = x)  \\
+    \eta_{1}(x) &=& P(Y = 0 | Y_{true} = 1 , X = x) 
+\end{eqnarray}
+
+- 真の分布：$f(y|x,t)$
+- コンタミの割合：$1-c(x) = \eta_{0}(x) + \eta_{1}(x)$
+- コンタミの分布：$h(y|x,t)$ 
+
+## シュミレーション設定
+
+共変量
+\begin{equation}
+    XX_i \sim N(0_9, \Sigma)
+\end{equation}
+where,
+\begin{equation}
+    \Sigma = \left(
+    \begin{array}{cc}
+       1  & \rho\\
+        \rho & 1 
+    \end{array} 
+    \right) = \left(
+    \begin{array}{cc}
+        1 & 0 \\
+        0 & 1 
+    \end{array}
+    \right)
+\end{equation}
+
+処置
+\begin{equation}
+    TT_i \sim Bin(p)
+\end{equation}
+
+\begin{eqnarray}
+  \textbf{lm} &=&  0.2+XX_{i1}+XX_{i2}+XX_{i3}+XX_{i4}+XX_{i5}+XX_{i6}+XX_{i7}+XX_{i8}+XX_{i9}\\
+p &=& \textbf{expit}(\textbf{lm})
+\end{eqnarray}
+
+潜在アウトカム
+\begin{equation}
+    YY_{i}^{(1)} \sim Bin(p1), \quad YY_{i}^{(0)} \sim Bin(p0)
+\end{equation}
+
+\begin{eqnarray}
+  \textbf{lm1} &=& 0.2 + 1 + 1 * XX_{i1}  - 1 * XX_{i2} + 1 * XX_{i3} \\
+  \textbf{lm0} &=& 0.2 + 1 * XX_{i1}  - 1 * XX_{i2} + 1 * XX_{i3}\\
+  p1 &=& \textbf{expit}(\textbf{lm1}) \\
+  p0 &=& \textbf{expit}(\textbf{lm0})
+\end{eqnarray}
+
+つまり、$Z=(X_1,X_2,X_3)$
+
+観測アウトカム
+\begin{equation}
+    YY_i = TT_i * YY_i^{(1)} + (1 - TT_i) * YY_i^{(0)} 
+\end{equation}
+
+誤判別の割合
+\begin{equation}
+    \eta_0 = 0.1, \: \eta_1 = 0.05
+\end{equation}
+
+## シュミレーション結果
+
+サンプルサイズ、シュミレーション回数はともに500である。
+
+Table: 真の値
+
+t|b0|b1|b2|b3
+|:--|:--|:--|:--|:--|
+1|0.2|1|-1|1
+
+## 誤判別がないとき
+
+```{r, include=FALSE}
+df1 <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g0_m0.csv",show_col_types = FALSE) 
+df2 <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g1_m0.csv",show_col_types = FALSE) 
+```
+
+- $\gamma=0.00001$のとき
+```{r , echo=FALSE}
+df1 %>% summary()
+```
+
+
+- $\gamma=1$のとき
+```{r , echo=FALSE}
+df2 %>% summary()
+```
+
+
+## 誤判別があるとき
+誤判別の設定は、$\eta_{0} = 0.1, \: \eta_{1} = 0.05$である
+
+```{r, include=FALSE}
+df1 <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g0_m01.csv",show_col_types = FALSE) 
+df2 <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g1_m01.csv",show_col_types = FALSE) 
+df3 <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g2_m01.csv",show_col_types = FALSE) 
+df4 <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g3_m01.csv",show_col_types = FALSE) 
+df5 <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g4_m01.csv",show_col_types = FALSE) 
+```
+
+
+- $\gamma=0.00001$のとき
+```{r , echo=FALSE}
+df1 %>% summary()
+```
+
+- $\gamma=1$のとき
+```{r , echo=FALSE}
+df2 %>% summary()
+```
+
+- $\gamma=2$のとき
+```{r , echo=FALSE}
+df3 %>% summary()
+```
+
+- $\gamma=3$のとき
+```{r , echo=FALSE}
+df4 %>% summary()
+```
+
+- $\gamma=4$のとき
+```{r , echo=FALSE}
+df5 %>% summary()
+```
+
+## 結果と考察
+- 誤判別がないとき、すべてのパラメータで$\gamma \approx 0$のときに、ほとんどバイアスなく推定できており、求めている挙動通りである
+
+
+- 誤判別がある時、求めたい対象である治療変数のパラメータ$t$は$\gamma \approx 0$のとき、平均0.75であるが、$\gamma = 2$で平均0.83、$\gamma =3$で平均0.88であり、バイアスの減少は見られるが完全には取り除けていない
+
+- Hungのロバストなロジスティック回帰のシュミレーションを行った際も、論文ではバイアスなく推定できると結果が報告されていたが、自分の再現では0.1程度バイアスが残ってしまっている
+
+- シュミレーションの実装コードのバグが原因なのではないかと考えているが、原因はわかっていない
+
+- 平均ではなく第三四分位数の値が、真の値に近くなっている結果も、ロバストなロジスティック回帰の再現を行ったときと同じ現象である。
+

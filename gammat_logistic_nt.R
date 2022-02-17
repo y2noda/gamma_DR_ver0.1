@@ -1,10 +1,10 @@
 library(tidyverse)
 library(MASS)
-#matlabのコードを再現
 
 #input
 # y: ２値アウトカム(n x 1)
-# X: 共変量行列(n x p)
+# X: 共変量行列(n x p) 一列目が切片　
+# TT: 治療変数(n x 1)
 # gamma: パラメータ(1 x 1)
 # b1: 初期値(p x 1)
 
@@ -13,7 +13,13 @@ library(MASS)
 # wi: 重み(n x 1)
 # cov: 漸近共分散行列(p x p)
 
-gamma_logistic_nt = function(y, X, gamma, b1){
+gammat_logistic_nt = function(y, X, TT, gamma, b1){
+  
+  # 傾向スコアの算出
+  ps_fit <- glm(TT~X, family=binomial)$fit
+  
+  # 共変量行列の一列目に治療変数を追加
+  X <- cbind(TT,X)
   
   n <- dim(X)[1]
   p <- dim(X)[2]
@@ -35,20 +41,24 @@ gamma_logistic_nt = function(y, X, gamma, b1){
     pi <- ei_gamma/(1+ei_gamma)
     vi <- pi*(1-pi)
     
+    # MSMのためのウェイト
+    ps_w <- ifelse(TT==1, 1/ps_fit, 1/(1-ps_fit))
+    ps_w <- rep(1,n)
+    
     #||f||_(gamma+1) (n x 1)
     fi <- ((1+ei_gamma)/(1+exp(X%*%b1))^(gamma+1))^(1/(gamma+1))
     
     #ヘッセ行列 (p x p)
-    H <- (t(X)%*%diag(as.vector(fi*vi/n))%*%X + DI)
+    H <- (t(X)%*%diag(as.vector(ps_w*fi*vi/n))%*%X + DI)
     
     #スコア関数 (p x 1)
-    S <- (t(X)%*%diag(as.vector(wi/n)) %*% (y-pi)-DI%*%b0)
+    S <- (t(X)%*%diag(as.vector(ps_w*wi/n)) %*% (y-pi)-DI%*%b0)
     
     #変化量H^(-1)*S
     HG <- solve(H, S)
     
     val1 <- amj(y, X, gamma, lam, val0, b0, HG)$val1
-    b1 <- amj(y,X, gamma, lam, val0, b0, HG)$b1
+    b1 <- amj(y, X, gamma, lam, val0, b0, HG)$b1
     
     d <- norm(matrix(b1-b0))/norm(matrix(b0))
     sg <- sg+1
@@ -97,3 +107,4 @@ amj = function(y, X, gamma, lam, val0, b0, HG){
   }
   return(list(val1=val1, b1=b1))
 }
+
