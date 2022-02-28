@@ -4,7 +4,7 @@ library(MASS)
 
 # シュミレーション開始
 rm(list = ls(all.names = TRUE))
-source("~/Projects/gamma_DR_ver0.1/gammat_logistic_nt.R")
+source("~/Projects/gamma_DR_ver0.1/code/gammat_logistic_nt.R")
 
 # サンプルサイズ
 n = 500
