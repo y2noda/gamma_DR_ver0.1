@@ -49,6 +49,8 @@ gamma_logistic_nt = function(y, X, gamma, b1){
     
     val1 <- amj(y, X, gamma, lam, val0, b0, HG)$val1
     b1 <- amj(y,X, gamma, lam, val0, b0, HG)$b1
+    # rate <- 1
+    # b1 <- b0 + rate * HG
     
     d <- norm(matrix(b1-b0))/norm(matrix(b0))
     sg <- sg+1
@@ -78,6 +80,9 @@ obj = function(y, X, gamma, lam, beta){
   ei_gamma <- exp((gamma+1)*X%*%beta)
   val <- mean( ((ei_gamma^y)/(1+ei_gamma))^(gamma/(gamma+1)) )/gamma - 0.5*lam*norm(matrix(beta))^2
   return(val)
+  # pi = (1+exp(-X%*%beta))^(-1)
+  # val = mean(y*log(pi)+(1-y)*log(1-pi)) - 0.5*lam*norm(matrix(beta))^2
+  # return(val)
 }
 
 amj = function(y, X, gamma, lam, val0, b0, HG){
