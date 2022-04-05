@@ -8,8 +8,8 @@ library(MASS)
 
 # シュミレーション開始
 rm(list = ls(all.names = TRUE))
-source("~/gamma_DR_ver0.1/code/gamma_logistic_nt.R")
-# source("~/Projects/gamma_DR_ver0.1/code/gammat_logistic_nt.R")
+# source("~/gamma_DR_ver0.1/code/gamma_logistic_nt.R")
+source("~/Projects/gamma_DR_ver0.1/code/gamma_logistic_nt.R")
 
 set.seed(123)
 # サンプルサイズ
@@ -58,8 +58,7 @@ for (i in 1:kk_T) {
                     rho,rho,rho,rho,rho,rho,1,rho,
                     rho,rho,rho,rho,rho,rho,rho,1),8,8)
 
-  XX <- mvrnorm(n, mu, Sigma)
-
+  XX <- mvrnorm(n, mu, Sigma) %>% scale()
   # 一行目に切片項を追加
   XX <- cbind(rep(1,n),XX)
   
@@ -96,7 +95,7 @@ for (i in 1:kk_T) {
   # pp01_t <- 0.1; pp10_t <- 0.1
   # pp01_c <- 0.1; pp10_c <- 0.1
   
-  pp10 <- 0.1; pp01 <- 0.1
+  pp10 <- 0.05; pp01 <- 0.1
   
   YY <- rep(0,n)
   for(j in 1:n){
@@ -360,15 +359,16 @@ results.beta_hat %>% summary()
 # 0.4548  0.6047  0.6601  0.6642  0.7230  0.8835 
 
 ## アウトプット
-# export_data <- data.frame(results.beta_t)
-# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/beta_hat_m00.csv")
+# export_data <- data.frame(results.beta_hat)
+# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/0405/robust_res.csv")
 # 
 # export_data <- data.frame(results.gamma)
 # write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m00.csv")
 
 ## input
-# df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_hat_m03.csv") 
+# df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/0405/robust_res.csv")
 # df %>% summary()
+# df %>% summary %>% xtable::xtable()
 # 
 # 
 # ## data加工
