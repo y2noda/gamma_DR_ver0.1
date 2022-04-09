@@ -74,7 +74,7 @@ for (i in 1:kk_T) {
   
   # 初期値とガンマの設定
   # gamma <- 0.00001
-  gamma <- 4
+  gamma <- 2
   b1 <- rep(1,nval)
   
   # 推定
@@ -102,7 +102,8 @@ export_data <- results.beta_hat
 # write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m00.csv")
 
 
-df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g3_m01.csv") 
+df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g0_m01.csv") 
 df %>% summary()
+df %>% summary %>% xtable::xtable()
 
 

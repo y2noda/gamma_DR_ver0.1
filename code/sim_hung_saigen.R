@@ -13,10 +13,10 @@ source("~/Projects/gamma_DR_ver0.1/code/gamma_logistic_nt.R")
 
 set.seed(123)
 # サンプルサイズ
-n = 500
+n = 1000
 
 # シミュレーションの繰り返し数
-kk_T <- 500
+kk_T <- 1000
 
 pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
 
@@ -278,6 +278,8 @@ for (i in 1:kk_T) {
   # 
   # gamma <- 2
   # b1 <- rep(0,9)
+  # 
+  # # 準ニュートン法
   # res <- optim(b1, loss, method="BFGS", gr=gr, control = list(fnscale = -1))
   # res_df <- data.frame(t(res$par))
   # colnames(res_df) <- c("b1","b2","b3","b4","b5","b6","b7","b8","b9")
@@ -360,13 +362,13 @@ results.beta_hat %>% summary()
 
 ## アウトプット
 # export_data <- data.frame(results.beta_hat)
-# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/0405/robust_res.csv")
-# 
+# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/0409/hung1000_res.csv")
+
 # export_data <- data.frame(results.gamma)
 # write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m00.csv")
 
 ## input
-# df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/0405/robust_res.csv")
+# df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/0409/optim1000_res.csv")
 # df %>% summary()
 # df %>% summary %>% xtable::xtable()
 # 
