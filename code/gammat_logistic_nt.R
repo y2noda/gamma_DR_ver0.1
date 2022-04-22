@@ -43,7 +43,7 @@ gammat_logistic_nt = function(y, X, TT, gamma, b1){
     
     # MSMのためのウェイト
     ps_w <- ifelse(TT==1, 1/ps_fit, 1/(1-ps_fit))
-    ps_w <- rep(1,n)
+    # ps_w <- rep(1,n)
     
     #||f||_(gamma+1) (n x 1)
     fi <- ((1+ei_gamma)/(1+exp(X%*%b1))^(gamma+1))^(1/(gamma+1))
@@ -91,13 +91,13 @@ obj = function(y, X, gamma, lam, beta){
 }
 
 amj = function(y, X, gamma, lam, val0, b0, HG){
-  rate <- 1
+  rate <- 0.5
   amj <- 1
   amj_num <- 30
   
   b1 <- b0 + rate * HG
   val1 <- obj(y, X, gamma, lam, b1)
-  while(val1 < val0 - 10^-8 && amj <= amj_num){
+  while(val1 < val0 - 10^(-8) && amj <= amj_num){
     b1 <- b0 + (0.5^amj * rate) * HG
     val1 <- obj(y, X, gamma, lam, b1)
     amj <- amj + 1

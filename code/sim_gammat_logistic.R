@@ -15,10 +15,10 @@ kk_T <- 500
 pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
 
 # 推定量の数
-nval <- 5
+nval <- 3
 
 results.beta_hat <- data.frame(matrix(vector(), kk_T, nval))
-colnames(results.beta_hat) <- c("t","b0","b1","b2","b3")
+colnames(results.beta_hat) <- c("t","b0","b1")
 # results.gamma <- NULL
 
 for (i in 1:kk_T) {
@@ -52,16 +52,17 @@ for (i in 1:kk_T) {
 
   # Potential outcomesの分布の設定
   # アウトカムの回帰パラメータの設定
-  Y_lm <- 0.2 + TT + XX[,1] - XX[,2] + XX[,3]
+  # Y_lm <- 0.2 + TT + XX[,1] - XX[,2] + XX[,3]
+  Y_lm <- 0.2 + 2*TT + 2*XX[,1]
   p_Y <- exp(Y_lm)/(1+exp(Y_lm))
   
   # ZZ
-  ZZ <- XX[,1:3]
-  ZZ_tilde <- XX[,4:9]
+  ZZ <- XX[,1]
+  ZZ_tilde <- XX[,2:9]
   
   #　誤判別を含むアウトカムデータの生成
   ## Misclassified outcomesの割合の設定
-  pp10 <- 0.1; pp01 <- 0.05
+  pp10 <- 0.1; pp01 <- 0.1
   
   YY <- rep(0,n)
   for(j in 1:n){
@@ -75,11 +76,12 @@ for (i in 1:kk_T) {
   # 初期値とガンマの設定
   # gamma <- 0.00001
   gamma <- 2
-  b1 <- rep(1,nval)
+  b1 <- rep(2,nval)
+  
   
   # 推定
   res_df <- data.frame(t(gammat_logistic_nt(YY, ZZ, TT, gamma, b1)$b1))
-  colnames(res_df) <- c("t","b0","b1","b2","b3")
+  colnames(res_df) <- c("t","b0","b1")
   
   results.beta_hat[i,] <- res_df
   
@@ -92,18 +94,18 @@ results.beta_hat %>% summary()
 
 
 ## アウトプット
-export_data <- results.beta_hat
-
-# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/beta_g0_m02.csv")
+# export_data <- results.beta_hat
+# 
+# write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/0422/g0_m01.csv")
 # 
 # write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/beta_g4_m01.csv")
 
 # export_data <- data.frame(results.gamma)
 # write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m00.csv")
 
-
-df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g0_m01.csv") 
-df %>% summary()
-df %>% summary %>% xtable::xtable()
+# 
+# df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/beta_g0_m01.csv") 
+# df %>% summary()
+# df %>% summary %>% xtable::xtable()
 
 
