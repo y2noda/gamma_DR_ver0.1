@@ -46,7 +46,8 @@ for (i in 1:kk_T) {
   
   TT <- rep(0,n)
   for (j in 1:n) {
-    TT[j] <- rbinom(1,size=1,prob=p_T[j])
+    # TT[j] <- rbinom(1,size=1,prob=p_T[j])
+    TT[j] <- rbinom(1,size=1,prob=0.5)
     if(TT[j]==0){
       TT[j]=-1
     }
@@ -88,8 +89,8 @@ for (i in 1:kk_T) {
   
   
   # optim関数を使った場合
-  gamma <- 2
-  # gamma <- 0.0001
+  # gamma <- 2
+  gamma <- 0.0001
   b1 <- rep(1,nval)
   
   # 傾向スコアの算出
@@ -97,8 +98,7 @@ for (i in 1:kk_T) {
   # MSMのためのウェイト
   # ps_w <- ifelse(TT==1, 1/ps_fit, 1/(1-ps_fit))
   
-  # 共変量行列の一列目に治療変数を追加
-  # X <- cbind(TT,ZZ)
+
   
   W <- (XX[,1]+XX[,2]+XX[,3]+XX[,4]+XX[,5]+XX[,6]+XX[,7]+XX[,8]+XX[,9])*TT/2
   
