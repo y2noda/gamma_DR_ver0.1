@@ -14,34 +14,35 @@ kk_T <- 100
 pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
 
 # 推定量の数
-nval <- 1
+nval <- 10
 
 results.beta_hat <- data.frame(matrix(vector(), kk_T, nval))
-colnames(results.beta_hat) <- c("b0")
+# colnames(results.beta_hat) <- c("b0")
 # results.gamma <- NULL
 
 for (i in 1:kk_T) {
   setTxtProgressBar(pb,i)
   
   # 共変量の分布の設定、乱数の発生
-  mu<- c(0,0,0,0,0,0,0,0,0)
+  mu<- c(0,0,0,0,0,0,0,0,0,0)
   
   ## 相関パラメータ
   rho <- 0
-  Sigma <- matrix(c(1,rho,rho,rho,rho,rho,rho,rho,rho,
-                    rho,1,rho,rho,rho,rho,rho,rho,rho,
-                    rho,rho,1,rho,rho,rho,rho,rho,rho,
-                    rho,rho,rho,1,rho,rho,rho,rho,rho,
-                    rho,rho,rho,rho,1,rho,rho,rho,rho,
-                    rho,rho,rho,rho,rho,1,rho,rho,rho,
-                    rho,rho,rho,rho,rho,rho,1,rho,rho,
-                    rho,rho,rho,rho,rho,rho,rho,1,rho,
-                    rho,rho,rho,rho,rho,rho,rho,rho,1),9,9)
+  Sigma <- matrix(c(1,rho,rho,rho,rho,rho,rho,rho,rho,rho,
+                    rho,1,rho,rho,rho,rho,rho,rho,rho,rho,
+                    rho,rho,1,rho,rho,rho,rho,rho,rho,rho,
+                    rho,rho,rho,1,rho,rho,rho,rho,rho,rho,
+                    rho,rho,rho,rho,1,rho,rho,rho,rho,rho,
+                    rho,rho,rho,rho,rho,1,rho,rho,rho,rho,
+                    rho,rho,rho,rho,rho,rho,1,rho,rho,rho,
+                    rho,rho,rho,rho,rho,rho,rho,1,rho,rho,
+                    rho,rho,rho,rho,rho,rho,rho,rho,1,rho,
+                    rho,rho,rho,rho,rho,rho,rho,rho,rho,1),10,10)
   
   XX <- mvrnorm(n, mu, Sigma)
   
   # 処置の分布の設定,生成
-  T_lm <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]+XX[,5]+XX[,6]+XX[,7]+XX[,8]+XX[,9]
+  T_lm <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]+XX[,5]+XX[,6]+XX[,7]+XX[,8]+XX[,9]+XX[,10]
   p_T <- exp(T_lm)/(1+exp(T_lm))
   
   TT <- rep(0,n)
@@ -57,8 +58,11 @@ for (i in 1:kk_T) {
   # Potential outcomesの分布の設定
   # アウトカムの回帰パラメータの設定
 
-  Y_lm <- 5*(XX[,1]+XX[,2]+XX[,3]+XX[,4]+XX[,5]+XX[,6]+XX[,7]+XX[,8]+XX[,9])*TT/2
-  p_Y <- exp(Y_lm)/(1+exp(Y_lm))
+  # Y_lm <- 5*(XX[,1]+XX[,2]+XX[,3]+XX[,4]+XX[,5]+XX[,6]+XX[,7]+XX[,8]+XX[,9])*TT/2
+  beta_0 <- c(0.4, 0.8, -0.8, 0.8, -0.8)
+  Y_lm <- (sqrt(6)^-1 + (2*sqrt(6))^-1*XX[,3]+ (2*sqrt(6))^-1*XX[,4]+ (2*sqrt(6))^-1*XX[,5]+ (2*sqrt(6))^-1*XX[,6]+ (2*sqrt(6))^-1*XX[,7]+ (2*sqrt(6))^-1*XX[,8]+ (2*sqrt(6))^-1*XX[,1]+ (2*sqrt(6))^-1*XX[,9])^2
+          + ()
+    p_Y <- exp(Y_lm)/(1+exp(Y_lm))
   
   # ZZ
   # ZZ <- XX[,1]
