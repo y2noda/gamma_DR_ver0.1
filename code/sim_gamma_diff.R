@@ -6,15 +6,15 @@ library(MASS)
 rm(list = ls(all.names = TRUE))
 
 # サンプルサイズ
-n = 500
+n = 100
 
 # シミュレーションの繰り返し数
 kk_T <- 100
 
 pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
 
-# 推定量の数
-nval <- 10
+# 共変量行列の次元
+nval <- 50
 
 results.beta_hat <- data.frame(matrix(vector(), kk_T, nval))
 # colnames(results.beta_hat) <- c("b0")
@@ -24,20 +24,12 @@ for (i in 1:kk_T) {
   setTxtProgressBar(pb,i)
   
   # 共変量の分布の設定、乱数の発生
-  mu<- c(0,0,0,0,0,0,0,0,0,0)
+  mu<- rep(0,nval)
   
   ## 相関パラメータ
   rho <- 0
-  Sigma <- matrix(c(1,rho,rho,rho,rho,rho,rho,rho,rho,rho,
-                    rho,1,rho,rho,rho,rho,rho,rho,rho,rho,
-                    rho,rho,1,rho,rho,rho,rho,rho,rho,rho,
-                    rho,rho,rho,1,rho,rho,rho,rho,rho,rho,
-                    rho,rho,rho,rho,1,rho,rho,rho,rho,rho,
-                    rho,rho,rho,rho,rho,1,rho,rho,rho,rho,
-                    rho,rho,rho,rho,rho,rho,1,rho,rho,rho,
-                    rho,rho,rho,rho,rho,rho,rho,1,rho,rho,
-                    rho,rho,rho,rho,rho,rho,rho,rho,1,rho,
-                    rho,rho,rho,rho,rho,rho,rho,rho,rho,1),10,10)
+  
+  Sigma <- diag(nval)
   
   XX <- mvrnorm(n, mu, Sigma)
   
@@ -59,10 +51,17 @@ for (i in 1:kk_T) {
   # アウトカムの回帰パラメータの設定
 
   # Y_lm <- 5*(XX[,1]+XX[,2]+XX[,3]+XX[,4]+XX[,5]+XX[,6]+XX[,7]+XX[,8]+XX[,9])*TT/2
-  beta_0 <- c(0.4, 0.8, -0.8, 0.8, -0.8)
-  Y_lm <- (sqrt(6)^-1 + (2*sqrt(6))^-1*XX[,3]+ (2*sqrt(6))^-1*XX[,4]+ (2*sqrt(6))^-1*XX[,5]+ (2*sqrt(6))^-1*XX[,6]+ (2*sqrt(6))^-1*XX[,7]+ (2*sqrt(6))^-1*XX[,8]+ (2*sqrt(6))^-1*XX[,1]+ (2*sqrt(6))^-1*XX[,9])^2
-          + ()
-    p_Y <- exp(Y_lm)/(1+exp(Y_lm))
+  beta_0 <- replace(rep(0,nval+1), c(1,2,3,4,5), c(0.4, 0.8, -0.8, 0.8, -0.8))
+  
+  alpha_0 <- replace(rep(0,nval+1), 
+                     c(1,4,5,6,7,8,9,10,11),
+                     c(sqrt(6)^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1)
+                     )
+    
+  
+  Y_lm <- (rep(alpha_0[1], n) + (XX %*% alpha_0[-1]))^2 + (rep(beta_0[1], n) + (XX %*% beta_0[-1]) + (XX[,1]*XX[,2] *0.8))*TT + sqrt(2)*rnorm(n)
+  
+  p_Y <- exp(Y_lm)/(1+exp(Y_lm))
   
   # ZZ
   # ZZ <- XX[,1]
@@ -70,13 +69,13 @@ for (i in 1:kk_T) {
   
   #　誤判別を含むアウトカムデータの生成
   ## Misclassified outcomesの割合の設定
-  pp10 <- 0.1; pp01 <- 0.1
-  
-  YY <- rep(0,n)
-  for(j in 1:n){
-    p_Yc <- pp10*(1-p_Y[j])+(1-pp01)*p_Y[j]
-    YY[j] <-rbinom(1, size=1, prob=p_Yc)
-  }
+  # pp10 <- 0.1; pp01 <- 0.1
+  # 
+  # YY <- rep(0,n)
+  # for(j in 1:n){
+  #   p_Yc <- pp10*(1-p_Y[j])+(1-pp01)*p_Y[j]
+  #   YY[j] <-rbinom(1, size=1, prob=p_Yc)
+  # }
   
   
   # # 初期値とガンマの設定

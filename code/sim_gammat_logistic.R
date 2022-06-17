@@ -4,7 +4,8 @@ library(MASS)
 
 # シュミレーション開始
 rm(list = ls(all.names = TRUE))
-source("~/Projects/gamma_DR_ver0.1/code/gammat_logistic_nt.R")
+# source("~/Projects/gamma_DR_ver0.1/code/gammat_logistic_nt.R")
+source("~/gamma_DR_ver0.1/code/gammat_logistic_nt.R")
 
 # サンプルサイズ
 n = 500
@@ -144,7 +145,8 @@ results.beta_hat %>% summary()
 # write_csv2(export_data, file = "~/Projects/gamma_DR_ver0.1/results/gamma_hat_m00.csv")
 
 # 
-df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/0423/g0_m01.csv")
+# df <- read_csv2("~/Projects/gamma_DR_ver0.1/results/0423/g0_m01.csv")
+df <- read_csv2("~/gamma_DR_ver0.1/results/0423/g0_m01.csv")
 df %>% summary()
 # df %>% summary %>% xtable::xtable()
 
