@@ -11,7 +11,7 @@ rm(list = ls(all.names = TRUE))　
 n = 100
 
 # シミュレーションの繰り返し数
-kk_T <- 100
+kk_T <- 50
 # kk_T <- 500
 
 pb <- txtProgressBar(min = 1, max = kk_T, style = 3)
@@ -38,6 +38,9 @@ for (i in 1:kk_T) {
   
   XX <- mvrnorm(n, mu, Sigma)
   
+  # バリデーションデータを分割
+  XX_v <- XX[1:20,]
+  
   # 処置の分布の設定,生成
   # T_lm <- 0.2+XX[,1]+XX[,2]+XX[,3]+XX[,4]+XX[,5]+XX[,6]+XX[,7]+XX[,8]+XX[,9]+XX[,10]
   # p_T <- exp(T_lm)/(1+exp(T_lm))
@@ -51,13 +54,15 @@ for (i in 1:kk_T) {
     }
   }
   
+  TT_v <- TT[1:20]
   
-  # Potential outcomesの分布の設定
-  # アウトカムの回帰パラメータの設定
+  ## アウトカムの回帰パラメータの設定
   
-  beta_0 <- replace(rep(0,nval+1), c(1,2,3,4,5), c(0.4, 0.8, -0.8, 0.8, -0.8))
+  # 交互作用項
+  beta_0 <- replace(rep(0,nval + 1), c(1,2,3,4,5), c(0.4, 0.8, -0.8, 0.8, -0.8))
   
-  alpha_0 <- replace(rep(0,nval+1), 
+  # 主効果項
+  alpha_0 <- replace(rep(0,nval + 1), 
                      c(1,4,5,6,7,8,9,10,11),
                      c(sqrt(6)^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1, (2*sqrt(6))^-1)
   )
@@ -75,18 +80,71 @@ for (i in 1:kk_T) {
   lm <- 1.6 * (0.5 + XX[,1] - XX[,2] + XX[,3] - XX[,4] + XX[,1]*XX[,2])
   score_true <- (exp(lm/2)-1) / (exp(lm/2)+1)
   
-  
+  Y_v <- Y[1:20]
   
   #　誤判別を含むアウトカムデータの生成
   ## Misclassified outcomesの割合の設定
   p_Y <- exp(Y_lm)/(1+exp(Y_lm))
-  pp10 <- 0; pp01 <- 0
+  pp10 <- 0.1; pp01 <- 0.1
 
   Y <- rep(0,n)
   for(j in 1:n){
     p_Yc <- pp10*(1-p_Y[j])+(1-pp01)*p_Y[j]
     Y[j] <-rbinom(1, size=1, prob=p_Yc)
   }
+
+  
+  # 感度・特異度に関して
+  thet0 <- -2.5; thet1 <- 2; thet2 <- 1; thet3 <- -1; thet4 <- -0.2;
+  TX <- cbind(TT, XX)
+  
+  eta0 <- thet0 + thet2 * XX[,2] + thet3 * XX[,3] + thet4 * XX[,4]
+  eta1 <- thet0 + thet1 + thet2 * XX[,2] + thet3 * XX[,3] + thet4 * XX[,4]
+  
+  SEx = exp(eta1)/(1 + exp(eta1))
+  SPx = 1 - exp(eta0)/(1 + exp(eta0))
+  
+  W <- cbind(rep(1, n), XX)
+  W_star <- W * TT/2
+  
+  like_fun <- function(par_list){
+    # W_star_lm <- 0
+    # index <- 1
+    # for (par in par_list) {
+    #   W_star_lm <- W_star_lm + W_star[,index]%*%par
+    #   index <- index +1
+    # }
+    
+    W_star_lm <- W_star %*% par_list
+  
+    py1 <- exp(W_star_lm)/(1+exp(W_star_lm))
+    
+    # 尤度
+    term1mn <- ((1-SPx)*(1-py1) + SEx*py1)^Y
+    term2mn <- (SPx*(1-py1) + (1-SEx)*py1)^(1-Y)
+    
+    term1v <- (SEx*py1)^(Y[1:20]*Y_v)
+    term2v <- ((1 - SPx)*(1-py1))^(Y[1:20]*(1 - Y_v))
+    term3v <- ((1 - SEx)*py1)^((1 - Y[1:20])*Y_v)
+    term4v <- (SPx*(1-py1))^((1 - Y[1:20])*(1 - Y_v))
+    
+    intval <- c(rep(1,20),rep(0,80))
+    
+    like = ((term1mn*term2mn)^(1 - intval))*((term1v*term2v*term3v*term4v)^intval)
+    return(-sum(like))
+    
+  }
+  
+  par_list <- c()
+  for ( j in 1:ncol(W_star)) {
+    par_list <- c(par_list, paste("W_star",j,sep = ""))
+  }
+
+
+    
+  library(bbmle)
+  parnames(like_fun)<-par_list
+  res <- mle2(like_fun, start=setNames(rep(0,ncol(W_star)), par_list), vecpar = TRUE)
   
   
   # 傾向スコアの算出
