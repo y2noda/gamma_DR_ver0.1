@@ -70,7 +70,7 @@ for (i in 1:kk_T) {
   
   # ２値の場合
   Y_lm <- (rep(alpha_0[1], n) + (XX %*% alpha_0[-1]))^2 + (rep(beta_0[1], n) + (XX %*% beta_0[-1]) + (XX[,1]*XX[,2] *0.8))*TT + sqrt(2)*rnorm(n)
-  Y <- ifelse(Y_lm >=0, 1,0)
+  # Y <- ifelse(Y_lm >=0, 1,0)
   
   lm <- 1.6 * (0.5 + XX[,1] - XX[,2] + XX[,3] - XX[,4] + XX[,1]*XX[,2])
   score_true <- (exp(lm/2)-1) / (exp(lm/2)+1)
@@ -153,7 +153,7 @@ for (i in 1:kk_T) {
   
   W_star.scaled <- scale(W_star)
   # beta_hat <- glm(Y_lm ~ W_star +0 , family = gaussian)$coef
-  lasso.model.cv <- cv.glmnet(x = W_star, y = Y, family = "binomial", alpha = 1, nfolds = 10)
+  lasso.model.cv <- cv.glmnet(x = W_star, y = Y, family = "binomial", alpha = 1, nfolds = 10) %>% plot
   
   lasso.model <- glmnet(x = W_star, y = Y, family = "binomial", alpha = 1)
   
