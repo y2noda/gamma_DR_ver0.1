@@ -83,11 +83,12 @@ for (i in 1:kk_T) {
   # score_true <- 1.6 * (0.5 + XX[,1] - XX[,2] + XX[,3] - XX[,4] + XX[,1]*XX[,2])
   
   # ２値の場合
-  Y_lm <- (rep(alpha_0[1], n) + (XX %*% alpha_0[-1]))^2 + (rep(beta_0[1], n) + (XX %*% beta_0[-1]) + (XX[,1]*XX[,2] *0.8))*TT + sqrt(2)*rnorm(n)
+  # Y_lm <- (rep(alpha_0[1], n) + (XX %*% alpha_0[-1]))^2 + (rep(beta_0[1], n) + (XX %*% beta_0[-1]) + (XX[,1]*XX[,2] *0.8))*TT + sqrt(2)*rnorm(n)
+  Y_lm <- (rep(beta_0[1], n) + (XX %*% beta_0[-1]) + (XX[,1]*XX[,2] *0.8))*TT + sqrt(2)*rnorm(n)
   Y <- ifelse(Y_lm >=0, 1,0)
   
   # lm <- 1.6 * (0.5 + XX[,1] - XX[,2] + XX[,3] - XX[,4] + XX[,1]*XX[,2])
-  lm <- 1.6 * (0.5 + XX[,1] - XX[,2] + XX[,1]*XX[,2])
+  lm <- 2 * 0.8 * (0.5 + XX[,1] - XX[,2] + XX[,1]*XX[,2])
   score_true <- (exp(lm/2)-1) / (exp(lm/2)+1)
   
   
@@ -123,23 +124,25 @@ for (i in 1:kk_T) {
   # }
   # Y_star <- ifelse(Y_star_lm >=0, 1,0)
   
-  SEx <- rep(0.75, n); SPx <- rep(0.7, n); 
   
-  p_Y_star <- SEx*Y + (1-SPx)*(1-Y)
-  Y_star <- rep(0,n)
-  for(j in 1:n){
-    Y_star[j] <-rbinom(1, size=1, prob=p_Y_star[j])
-  }
+  # 簡単なケース
+  # SEx <- rep(0.75, n); SPx <- rep(0.7, n); 
+  # 
+  # p_Y_star <- SEx*Y + (1-SPx)*(1-Y)
+  # Y_star <- rep(0,n)
+  # for(j in 1:n){
+  #   Y_star[j] <-rbinom(1, size=1, prob=p_Y_star[j])
+  # }
   
   ## バリデーションデータの分割----
   
-  Y_star_v <- Y_star[1:20]; Y_star_m <- Y_star[21:100];
-  Y_v <- Y[1:20]; Y_m <- Y[21:100]; # Y_mは観測できない
-  XX_v <- XX[1:20, ]; XX_m <- XX[21:100, ];
-  TT_v <- TT[1:20]; TT_m <- TT[21:100];
-  W_star_v <- W_star[1:20,]; W_star_m <- W_star[21:100,];
-  W_v <- W[1:20,]; W_m <- W[21:100,];
-  
+  # Y_star_v <- Y_star[1:20]; Y_star_m <- Y_star[21:100];
+  # Y_v <- Y[1:20]; Y_m <- Y[21:100]; # Y_mは観測できない
+  # XX_v <- XX[1:20, ]; XX_m <- XX[21:100, ];
+  # TT_v <- TT[1:20]; TT_m <- TT[21:100];
+  # W_star_v <- W_star[1:20,]; W_star_m <- W_star[21:100,];
+  # W_v <- W[1:20,]; W_m <- W[21:100,];
+
   ## 感度・特異度の推定----
   
   # YW_v <- cbind(Y_v, W_star_v)
@@ -156,57 +159,82 @@ for (i in 1:kk_T) {
   
   ## 尤度関数の定義----
   
-  like_fun <- function(par_list){
-    # W_star_lm <- 0
-    # index <- 1
-    # for (par in par_list) {
-    #   W_star_lm <- W_star_lm + W_star[,index]%*%par
-    #   index <- index +1
-    # }
-    
-    W_star_lm <- W_star %*% par_list
-  
-    py1 <- exp(W_star_lm)/(1+exp(W_star_lm))
-    
-    # 尤度
-    term1mn <- ((1-SPx)*(1-py1) + SEx*py1)^Y_star
-    term2mn <- (SPx*(1-py1) + (1-SEx)*py1)^(1-Y_star)
-    
-    term1v <- (SEx*py1)^(Y[1:20]*Y_v)
-    term2v <- ((1 - SPx)*(1-py1))^(Y_star_v*(1 - Y_v))
-    term3v <- ((1 - SEx)*py1)^((1 - Y_star_v)*Y_v)
-    term4v <- (SPx*(1-py1))^((1 - Y_star_v)*(1 - Y_v))
-    
-    intval <- c(rep(1,20),rep(0,80))
-    
-    like = ((term1mn*term2mn)^(1 - intval))*((term1v*term2v*term3v*term4v)^intval)
-    return(-sum(like))
-    
-  }
+  # like_fun <- function(par_list){
+  #   # W_star_lm <- 0
+  #   # index <- 1
+  #   # for (par in par_list) {
+  #   #   W_star_lm <- W_star_lm + W_star[,index]%*%par
+  #   #   index <- index +1
+  #   # }
+  #   
+  #   W_star_lm <- W_star %*% par_list
+  # 
+  #   py1 <- exp(W_star_lm)/(1+exp(W_star_lm))
+  #   
+  #   # 尤度
+  #   term1mn <- ((1-SPx)*(1-py1) + SEx*py1)^Y_star
+  #   term2mn <- (SPx*(1-py1) + (1-SEx)*py1)^(1-Y_star)
+  #   
+  #   term1v <- (SEx*py1)^(Y[1:20]*Y_v)
+  #   term2v <- ((1 - SPx)*(1-py1))^(Y_star_v*(1 - Y_v))
+  #   term3v <- ((1 - SEx)*py1)^((1 - Y_star_v)*Y_v)
+  #   term4v <- (SPx*(1-py1))^((1 - Y_star_v)*(1 - Y_v))
+  #   
+  #   intval <- c(rep(1,20),rep(0,80))
+  #   
+  #   like = ((term1mn*term2mn)^(1 - intval))*((term1v*term2v*term3v*term4v)^intval)
+  #   return(-sum(like))
+  #   
+  # }
   
   
   ## パラメータ推定----
   
-  par_list <- c()
-  for ( j in 1:ncol(W_star)) {
-    par_list <- c(par_list, paste("W_star",j,sep = ""))
-  }
-    
-  library(bbmle)
-  parnames(like_fun)<-par_list
-  res <- mle2(like_fun, start=setNames(rep(0,ncol(W_star)), par_list), vecpar = TRUE)
+  library(mgcv)
+  # モデルの作成
+  lm.model <- gam(Y ~ W_star, data=airquality, family=binomial(link="logit"), drop.intercept=TRUE)        #　線形回帰
+  gam.model <- gam(Y ~ s(W_star), data=airquality, family=binomial(link="logit"), drop.intercept = TRUE)    #　平滑化スプライン
   
-  val_pred <- W%*%coef(res)
+  lm.pred <- predict(lm.model, W %>% data.frame())
+  gam.pred <- predict(gam.model, W %>% data.frame())
   
-  score_val <- (exp(val_pred/2)-1) / (exp(val_pred/2)+1)
+  lm.score <- (exp(lm.pred/2)-1) / (exp(lm.pred/2)+1)
+  gam.score <- (exp(gam.pred/2)-1) / (exp(gam.pred/2)+1)
   
-  corr.val <- cor(score_true, score_val)
+  lm.corr <- cor(score_true, lm.score)
+  gam.corr <- cor(score_true, gam.score)
   
-  results.corr[i,2] <- corr.val
   
-  results.bias[i,2] <- mean(score_true - score_val)
   
-  results.var[i,2] <- var(score_true - score_val)
+  plot(Y ~ W[,2])
+  
+  lines(lm.pred ~ W[,2], col=2, lwd=2)
+  lines(gam.pred ~ W_star[,2], col=4, lwd=2)
+  
+  
+  
+  
+  # 感度特異度を考慮した推定
+  # par_list <- c()
+  # for ( j in 1:ncol(W_star)) {
+  #   par_list <- c(par_list, paste("W_star",j,sep = ""))
+  # }
+  #   
+  # library(bbmle)
+  # parnames(like_fun)<-par_list
+  # res <- mle2(like_fun, start=setNames(rep(0,ncol(W_star)), par_list), vecpar = TRUE)
+  # 
+  # val_pred <- W%*%coef(res)
+  # 
+  # score_val <- (exp(val_pred/2)-1) / (exp(val_pred/2)+1)
+  # 
+  # corr.val <- cor(score_true, score_val)
+  # 
+  # results.corr[i,2] <- corr.val
+  # 
+  # results.bias[i,2] <- mean(score_true - score_val)
+  # 
+  # results.var[i,2] <- var(score_true - score_val)
   
   # 傾向スコアの算出
   # ps_fit <- glm(TT~XX, family=binomial)$fit
